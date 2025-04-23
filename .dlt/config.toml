@@ -1,0 +1,22 @@
+[runtime]
+dlthub_telemetry = false
+request_max_attempts = 5
+request_backoff_factor = 1.1
+request_timeout = 20
+
+[load]
+delete_completed_jobs=true
+truncate_staging_dataset=true
+
+[sources.imgw]
+root_urls = ["https://danepubliczne.imgw.pl/data/dane_pomiarowo_obserwacyjne/dane_meteorologiczne/dobowe/klimat/", "https://danepubliczne.imgw.pl/data/dane_pomiarowo_obserwacyjne/dane_meteorologiczne/dobowe/opad/", "https://danepubliczne.imgw.pl/data/dane_pomiarowo_obserwacyjne/dane_meteorologiczne/dobowe/synop/", "https://danepubliczne.imgw.pl/data/dane_pomiarowo_obserwacyjne/dane_meteorologiczne/terminowe/klimat/", "https://danepubliczne.imgw.pl/data/dane_pomiarowo_obserwacyjne/dane_meteorologiczne/terminowe/synop/"]
+### select single one for testing
+# terminowe (high granularity, sub-day)
+# root_urls = ["https://danepubliczne.imgw.pl/data/dane_pomiarowo_obserwacyjne/dane_meteorologiczne/terminowe/synop/"]
+# dobowe (lower granularity, daily)
+# root_urls = ["https://danepubliczne.imgw.pl/data/dane_pomiarowo_obserwacyjne/dane_meteorologiczne/dobowe/klimat/"]
+[destination.datalake]
+layout="imgw/{schema_name}/{table_name}/{load_id}.{file_id}.{ext}"
+
+[pipeline.imgw_pipeline_datalake]
+loader_file_format="parquet"
