@@ -1,4 +1,4 @@
-# imgw-pipeline
+# imgw pipeline
 
 [![Release](https://img.shields.io/github/v/release/dp997/imgw-pipeline)](https://img.shields.io/github/v/release/dp997/imgw-pipeline)
 [![Build status](https://img.shields.io/github/actions/workflow/status/dp997/imgw-pipeline/main.yml?branch=main)](https://github.com/dp997/imgw-pipeline/actions/workflows/main.yml?query=branch%3Amain)
@@ -11,8 +11,8 @@ Project is managed with uv, so you should probably [install](https://docs.astral
 
 Clone the repository with git and go into project directory:
 ```
-git clone https://github.com/dp997/imgw-pipeline
-cd imgw-pipeline
+git clone https://github.com/dp997/imgw
+cd imgw
 ```
 
 Synchronize the environment:
@@ -53,7 +53,7 @@ In case you want to try it out with dagster, you can run the dev webserver with 
 `uv run --with=dagster-webserver dagster dev`
 
 ## 4. Docker
-
+TODO
 
 
 Repository initiated with [fpgmaas/cookiecutter-uv](https://github.com/fpgmaas/cookiecutter-uv).
