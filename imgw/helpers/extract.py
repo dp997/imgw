@@ -102,7 +102,6 @@ def fetch_data(url: str) -> ImgwZip:
     try:
         filename = urlparse(url).path.split("/")[-1]
         response = requests.get(url)
-        print(response.status_code)
         response.raise_for_status()
     except Exception:
         logger.exception("Error fetching data for %s", url)
