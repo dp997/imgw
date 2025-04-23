@@ -16,7 +16,8 @@ cd imgw
 ```
 
 Synchronize the environment:
-```uv sync --freeze```
+```uv sync```
+The command will create a new python virtual environment inside `.venv` directory.
 
 ## 1. Configuring the pipeline
 The pipeline is managed with dlt (optionally dagster). The `.dlt` directory contains `config.toml` with some sane defaults for pipeline to run.
