@@ -3,6 +3,7 @@ from typing import Optional
 
 import dlt
 import dlt.extract
+import duckdb
 from dlt.common.typing import TDataItem
 from dlt.extract.items import DataItemWithMeta
 from dlt.extract.resource import DltResource
@@ -46,10 +47,12 @@ def imgw_historic() -> list[DltResource]:
 
 
 def get_local_pipeline() -> dlt.Pipeline:
+    db = duckdb.connect("./output/imgw.db", config={"memory_limit": "2GB", "preserve_insertion_order": "false"})
     return dlt.pipeline(
         pipeline_name="imgw_pipeline_local",
-        destination=dlt.destinations.duckdb("./output/imgw.db", destination_name="local"),
+        destination=dlt.destinations.duckdb(db, destination_name="local"),
         dataset_name="imgw_historic",
+        progress="log",
     )
 
 
@@ -58,4 +61,5 @@ def get_datalake_pipeline() -> dlt.Pipeline:
         pipeline_name="imgw_pipeline_datalake",
         destination=dlt.destinations.filesystem(destination_name="datalake"),
         dataset_name="raw_data",
+        progress="log",
     )

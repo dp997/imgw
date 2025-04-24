@@ -1,5 +1,5 @@
 [project]
-name = "imgw-pipeline"
+name = "imgw"
 version = "0.0.1"
 description = "pipeline for imgw data"
 authors = [{ name = "Dominik Pierzga", email = "dominik.pierzga@gmail.com" }]
@@ -18,20 +18,21 @@ classifiers = [
 ]
 dependencies = [
     "bs4>=0.0.2",
-    "dagster-dlt>=0.26.10",
     "dlt[duckdb,filesystem]>=1.9.0",
+    "duckdb>=1.2.2",
     "pyarrow>=19.0.1",
     "pydantic>=2.11.3",
 ]
 
 [project.urls]
-Homepage = "https://dp997.github.io/imgw-pipeline/"
-Repository = "https://github.com/dp997/imgw-pipeline"
-Documentation = "https://dp997.github.io/imgw-pipeline/"
+Homepage = "https://dp997.github.io/imgw/"
+Repository = "https://github.com/dp997/imgw"
+Documentation = "https://dp997.github.io/imgw/"
 
 [project.optional-dependencies]
 dagster = [
     "dagster",
+    "dagster-dlt>=0.26.10",
 ]
 
 [dependency-groups]
@@ -44,6 +45,7 @@ dev = [
     "ruff>=0.11.5",
     "streamlit>=1.44.1",
     "pyarrow-stubs>=19.1",
+    "psutil>=7.0.0",
 ]
 
 [tool.mypy]

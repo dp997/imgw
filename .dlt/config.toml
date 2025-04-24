@@ -4,9 +4,17 @@ request_max_attempts = 5
 request_backoff_factor = 1.1
 request_timeout = 20
 
+[data_writer]
+file_max_bytes=200000000
+
+[normalize]
+workers=8
+loader_file_format="parquet"
+
 [load]
 delete_completed_jobs=true
 truncate_staging_dataset=true
+workers=20
 
 [sources.imgw]
 root_urls = ["https://danepubliczne.imgw.pl/data/dane_pomiarowo_obserwacyjne/dane_meteorologiczne/dobowe/klimat/", "https://danepubliczne.imgw.pl/data/dane_pomiarowo_obserwacyjne/dane_meteorologiczne/dobowe/opad/", "https://danepubliczne.imgw.pl/data/dane_pomiarowo_obserwacyjne/dane_meteorologiczne/dobowe/synop/", "https://danepubliczne.imgw.pl/data/dane_pomiarowo_obserwacyjne/dane_meteorologiczne/terminowe/klimat/", "https://danepubliczne.imgw.pl/data/dane_pomiarowo_obserwacyjne/dane_meteorologiczne/terminowe/synop/"]
@@ -17,6 +25,3 @@ root_urls = ["https://danepubliczne.imgw.pl/data/dane_pomiarowo_obserwacyjne/dan
 # root_urls = ["https://danepubliczne.imgw.pl/data/dane_pomiarowo_obserwacyjne/dane_meteorologiczne/dobowe/klimat/"]
 [destination.datalake]
 layout="imgw/{schema_name}/{table_name}/{load_id}.{file_id}.{ext}"
-
-[pipeline.imgw_pipeline_datalake]
-loader_file_format="parquet"
