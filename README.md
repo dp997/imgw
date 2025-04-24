@@ -1,10 +1,23 @@
 # imgw pipeline
 
-[![Release](https://img.shields.io/github/v/release/dp997/imgw-pipeline)](https://img.shields.io/github/v/release/dp997/imgw-pipeline)
-[![Build status](https://img.shields.io/github/actions/workflow/status/dp997/imgw-pipeline/main.yml?branch=main)](https://github.com/dp997/imgw-pipeline/actions/workflows/main.yml?query=branch%3Amain)
-[![codecov](https://codecov.io/gh/dp997/imgw-pipeline/branch/main/graph/badge.svg)](https://codecov.io/gh/dp997/imgw-pipeline)
-[![Commit activity](https://img.shields.io/github/commit-activity/m/dp997/imgw-pipeline)](https://img.shields.io/github/commit-activity/m/dp997/imgw-pipeline)
-[![License](https://img.shields.io/github/license/dp997/imgw-pipeline)](https://img.shields.io/github/license/dp997/imgw-pipeline)
+[![Release](https://img.shields.io/github/v/release/dp997/imgw)](https://img.shields.io/github/v/release/dp997/imgw)
+[![Build status](https://img.shields.io/github/actions/workflow/status/dp997/imgw/main.yml?branch=main)](https://github.com/dp997/imgw/actions/workflows/main.yml?query=branch%3Amain)
+[![codecov](https://codecov.io/gh/dp997/imgw/branch/main/graph/badge.svg)](https://codecov.io/gh/dp997/imgw)
+[![Commit activity](https://img.shields.io/github/commit-activity/m/dp997/imgw)](https://img.shields.io/github/commit-activity/m/dp997/imgw)
+[![License](https://img.shields.io/github/license/dp997/imgw)](https://img.shields.io/github/license/dp997/imgw)
+
+## Intro
+This is a project that will encompass loading, modelling and presenting data from [imgw public API](https://danepubliczne.imgw.pl/pl/apiinfo).
+
+Goal is to try out [dlt](https://dlthub.com) and maybe some orchestration tools.
+
+What is available for now:
+- pipeline for historic data
+
+to do:
+- loading data from real-time endpoints
+- modelling
+- finishing with analysis/vis through a semantic layer
 
 ## Prerequisites
 Project is managed with uv, so you should probably [install](https://docs.astral.sh/uv/getting-started/) it.
@@ -43,6 +56,9 @@ Use the provided pipeline.py script:
 That will execute the script with `datalake` destination (object storage).
 
 If you want to run the pipeline locally with duckdb output, use the `--local` flag:
+
+### WARNING BEFORE YOU RUN LOCAL PIPELINE
+This is a **lot** of data. Pipeline **will** consume a lot of memory to insert it into duckdb. The config writer defaults seem to be OK for now, but you need to monitor the process to make sure you're not going to run into out-of-memory exceptions.
 
 `uv run pipeline.py --local`
 
