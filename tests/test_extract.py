@@ -4,7 +4,7 @@ from unittest.mock import patch
 import pyarrow as pa
 from dlt.sources.helpers import requests
 
-from imgw.helpers.extract import ImgwCsv, ImgwZip, fetch_data, read_table, save_failed_file, unzip
+from imgw.helpers.extract import ImgwCsv, ImgwZip, fetch_zip_data, read_table, save_failed_file, unzip
 
 TEST_VALID_SCHEMA = {"test_table": {"column1": pa.int64(), "column2": pa.string()}}
 
@@ -76,7 +76,7 @@ class TestHelpers(unittest.TestCase):
     @patch("requests.get")
     def test_fetch_data_invalid_url(self, mock_get):
         mock_get.side_effect = requests.RequestException("Mocked request exception")
-        imgw_zip = fetch_data("https://example.com/invalid_url.zip")
+        imgw_zip = fetch_zip_data("https://example.com/invalid_url.zip")
         self.assertEqual(imgw_zip.filename, "")
         self.assertEqual(imgw_zip.content, b"")
 
