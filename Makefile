@@ -14,6 +14,8 @@ check: ## Run code quality tools.
 	@uv run mypy
 	@echo "🚀 Checking for obsolete dependencies: Running deptry"
 	@uv run deptry .
+	@echo "🚀 Checking for license compatibility"
+	@uv run licensecheck --zero
 
 .PHONY: test
 test: ## Test the code with pytest

@@ -11,7 +11,20 @@ from imgw.utils import get_logger
 logger = get_logger(__name__)
 
 
-def is_visited(current_url: str, visited_dirs: set) -> bool:
+def _is_visited(current_url: str, visited_dirs: set) -> bool:
+    """
+    Checks if a URL has been visited before.
+
+    Args:
+        current_url (str): The URL to check.
+        visited_dirs (set): A set of URLs that have been visited.
+
+    Returns:
+        bool: True if the URL has been visited, False otherwise.
+
+    Notes:
+        If the URL has not been visited, it is added to the set of visited URLs.
+    """
     if current_url in visited_dirs:
         logger.debug("Already visited: %s", current_url)
         return True
@@ -19,7 +32,19 @@ def is_visited(current_url: str, visited_dirs: set) -> bool:
     return False
 
 
-def fetch_and_parse(current_url: str) -> Union[BeautifulSoup, None]:
+def _fetch_and_parse(current_url: str) -> Union[BeautifulSoup, None]:
+    """
+    Fetches the content of a given URL and parses it using BeautifulSoup.
+
+    Args:
+        current_url (str): The URL to fetch and parse.
+
+    Returns:
+        Union[BeautifulSoup, None]: A BeautifulSoup object containing the parsed HTML, or None if the request fails.
+
+    Raises:
+        requests.RequestException: Logs the exception if the request fails.
+    """
     try:
         response = requests.get(current_url)
         response.raise_for_status()
@@ -29,7 +54,19 @@ def fetch_and_parse(current_url: str) -> Union[BeautifulSoup, None]:
         return None
 
 
-def extract_links(soup: BeautifulSoup) -> list:
+def _extract_links(soup: BeautifulSoup) -> list:
+    """
+    Extracts all links from a BeautifulSoup object.
+
+    Args:
+        soup (BeautifulSoup): The BeautifulSoup object to extract links from.
+
+    Returns:
+        list: A list of 'a' tags found in the soup. If an error occurs during extraction, an empty list is returned.
+
+    Raises:
+        Exception: Internally caught and logged, not propagated.
+    """
     try:
         return soup.find_all("a")
     except Exception:
@@ -37,12 +74,24 @@ def extract_links(soup: BeautifulSoup) -> list:
         return []
 
 
-def process_link(
+def _process_link(
     link: Tag,
     current_url: str,
     found_zip_links: set,
     visited_dirs: set,
 ) -> None:
+    """
+    Process a link found on a webpage, extracting zip links and recursively scraping directories.
+
+    Args:
+        link (Tag): The HTML link element to process.
+        current_url (str): The URL of the current webpage.
+        found_zip_links (set): A set of zip links found so far.
+        visited_dirs (set): A set of directories that have been visited.
+
+    Returns:
+        None
+    """
     try:
         href = link.get("href")
         link_text = link.text.strip()
@@ -73,18 +122,41 @@ def scrape_directory_recursive(
     visited_dirs: set[str],
     found_zip_links: set[str],
 ) -> None:
-    if is_visited(current_url, visited_dirs):
+    """
+    Recursively scrapes a directory and its subdirectories for zip links.
+
+    Args:
+        current_url (str): The URL of the directory to scrape.
+        visited_dirs (set[str]): A set of URLs that have already been visited.
+        found_zip_links (set[str]): A set of zip links found during the scraping process.
+
+    Returns:
+        None
+    """
+    if _is_visited(current_url, visited_dirs):
         return
     logger.debug("Scraping: %s", current_url)
-    soup = fetch_and_parse(current_url)
+    soup = _fetch_and_parse(current_url)
     if soup is None:
         return
-    links = extract_links(soup)
+    links = _extract_links(soup)
     for link in links:
-        process_link(link, current_url, found_zip_links, visited_dirs)
+        _process_link(link, current_url, found_zip_links, visited_dirs)
 
 
 def find_zip_links(start_url: str) -> Iterable[str]:
+    """
+    Recursively scrapes the given directory URL to find all ZIP links.
+
+    Args:
+        start_url (str): The URL of the directory to start the search from.
+
+    Yields:
+        str: The URLs of the ZIP files found.
+
+    Notes:
+        The function modifies the URL to end with a '/' if it doesn't already.
+    """
     if not start_url.endswith("/"):
         start_url += "/"
 
