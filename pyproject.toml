@@ -4,6 +4,7 @@ version = "0.0.1"
 description = "pipeline for imgw data"
 authors = [{ name = "Dominik Pierzga", email = "dominik.pierzga@gmail.com" }]
 readme = "README.md"
+license = "MIT"
 keywords = ['python']
 requires-python = ">=3.10,<4.0"
 classifiers = [
@@ -46,6 +47,7 @@ dev = [
     "streamlit>=1.44.1",
     "pyarrow-stubs>=19.1",
     "psutil>=7.0.0",
+    "licensecheck>=2025.1.0",
 ]
 
 [tool.mypy]
