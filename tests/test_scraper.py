@@ -58,8 +58,8 @@ class TestScraper(unittest.TestCase):
             _process_link(link, "https://example.com", found_zip_links, visited_dirs)
             mock_scrape.assert_called_once()
 
-    @patch("imgw.helpers.scraper.fetch_and_parse")
-    @patch("imgw.helpers.scraper.extract_links")
+    @patch("imgw.helpers.scraper._fetch_and_parse")
+    @patch("imgw.helpers.scraper._extract_links")
     def test_scrape_directory_recursive(self, mock_extract_links, mock_fetch_and_parse):
         mock_fetch_and_parse.return_value = BeautifulSoup("<html></html>", "html.parser")
         mock_extract_links.return_value = []

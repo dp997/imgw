@@ -149,7 +149,7 @@ def unzip(zip_file: ImgwZip) -> list[ImgwCsv]:
                 else:
                     return []
     except zipfile.BadZipFile:
-        logger.exception("The provided bytes are not a valid zip file.", zip_file.filename)
+        logger.exception("The provided bytes are not a valid zip file.")
         logger.info("Turning to alternative unzip method.")
         return unzip_alt(zip_file)
     except Exception:
