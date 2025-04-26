@@ -1,7 +1,6 @@
 [runtime]
 dlthub_telemetry = false
 request_max_attempts = 5
-request_backoff_factor = 1.1
 request_timeout = 20
 
 [data_writer]
@@ -22,6 +21,6 @@ root_urls = ["https://danepubliczne.imgw.pl/data/dane_pomiarowo_obserwacyjne/dan
 # terminowe (high granularity, sub-day)
 # root_urls = ["https://danepubliczne.imgw.pl/data/dane_pomiarowo_obserwacyjne/dane_meteorologiczne/terminowe/synop/"]
 # dobowe (lower granularity, daily)
-# root_urls = ["https://danepubliczne.imgw.pl/data/dane_pomiarowo_obserwacyjne/dane_meteorologiczne/dobowe/klimat/"]
+# root_urls = ["https://danepubliczne.imgw.pl/data/dane_pomiarowo_obserwacyjne/dane_meteorologiczne/dobowe/opad/"]
 [destination.datalake]
 layout="imgw/{schema_name}/{table_name}/{load_id}.{file_id}.{ext}"
