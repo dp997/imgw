@@ -6,12 +6,20 @@ import duckdb
 from dlt.common.typing import TDataItem
 from dlt.extract.resource import DltResource
 
-from imgw.helpers.extract import ImgwCsv, fetch_zip_data, read_table, unzip
+from imgw.helpers.extract import ImgwCsv, fetch_zip_data, get_json_data, read_table, unzip
 from imgw.helpers.scraper import find_zip_links
 from imgw.schema import COLUMNS_DLT_SCHEMA
 from imgw.utils import get_logger
 
 logger = get_logger(__name__)
+
+DEFAULT_ENDPOINTS = [
+    {"endpoint_name": "synoptyczne", "api_path": "synop"},
+    {"endpoint_name": "hydrologiczne", "api_path": "hydro"},
+    {"endpoint_name": "meteorologiczne", "api_path": "meteo"},
+    {"endpoint_name": "ostrzezenia_meteorologiczne", "api_path": "warningsmeteo"},
+    {"endpoint_name": "ostrzezenia_hydrologiczne", "api_path": "warningshydro"},
+]
 
 
 @dlt.resource(selected=False, parallelized=True)
@@ -84,7 +92,10 @@ def imgw_historic() -> list[DltResource]:
     return [zip_links | csv_files | weather_tables]
 
 
-def get_local_pipeline(db_file: str = "output/imgw.db", dataset_name: str = "imgw_historic") -> dlt.Pipeline:
+def get_local_pipeline(
+    dataset_name: str,
+    db_file: str = "output/imgw.db",
+) -> dlt.Pipeline:
     """
     Creates a dlt pipeline for loading data into a local DuckDB database.
 
@@ -120,3 +131,20 @@ def get_datalake_pipeline(dataset_name: str = "raw_data") -> dlt.Pipeline:
         dataset_name=dataset_name,
         progress="log",
     )
+
+
+@dlt.source(name="imgw_real_time", max_table_nesting=0)
+def imgw_real_time() -> list[DltResource]:
+    """
+    IMGW real-time API source function generating a list of resources based on endpoints.
+
+    Returns:
+        Iterable[DltResource]: List of resource functions.
+    """
+    resources = []
+    for endpoint in DEFAULT_ENDPOINTS:
+        res_function = dlt.resource(get_json_data, name=endpoint["endpoint_name"], write_disposition="append")(
+            path=endpoint["api_path"]
+        )
+        resources.append(res_function)
+    return resources

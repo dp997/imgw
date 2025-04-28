@@ -3,11 +3,13 @@ import re
 import shutil
 import subprocess
 import zipfile
+from collections.abc import Iterable
 from io import BytesIO
 from typing import Optional, Union
 from urllib.parse import urlparse
 
 import pyarrow as pa
+from dlt.sources import TDataItem
 from dlt.sources.helpers import requests
 from pyarrow import csv
 from pydantic import BaseModel, field_validator
@@ -308,3 +310,44 @@ def fetch_zip_data(url: str) -> ImgwZip:
         return ImgwZip(filename="", content=b"")
     else:
         return ImgwZip(filename=filename, content=response.content)
+
+
+def get_json_data(path: str) -> Iterable[TDataItem]:
+    """
+    Fetches JSON data from the specified IMGW API endpoint.
+
+    Args:
+        path (str): The API endpoint path.
+
+    Yields:
+        TDataItem: The JSON data items.
+
+    Raises:
+        requests.HTTPError: If the HTTP request returns an unsuccessful status code.
+    """
+    url = f"https://danepubliczne.imgw.pl/api/data/{path}"
+    headers = {"Accept": "application/json"}
+
+    try:
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+    except requests.HTTPError as http_err:
+        if http_err.response.status_code == 404:
+            try:
+                error_body = http_err.response.json()
+                if (
+                    isinstance(error_body, dict)
+                    and error_body.get("status") is False
+                    and error_body.get("message") == "No products were found"
+                ):
+                    logger.warning("No data for endpoint %s, skipping", path)
+                    yield {}
+                    return  # return statement to exit function
+            except ValueError:
+                pass
+        raise  # This will be executed if the status code is not 404 or the response body doesn't match
+    except requests.RequestException:
+        raise
+    else:
+        result = response.json()
+        yield result

@@ -3,7 +3,7 @@ import logging
 import os
 from typing import Optional
 
-from imgw import get_datalake_pipeline, get_local_pipeline, imgw_historic
+from imgw import get_datalake_pipeline, get_local_pipeline, imgw_historic, imgw_real_time
 from imgw.utils import setup_logging
 
 
@@ -37,6 +37,7 @@ def check_directory(path: str, create: Optional[bool] = False) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
+    parser.add_argument("--historic", action="store_true", help="Run historic pipeline")
     parser.add_argument("--local", action="store_true", help="Run pipeline locally (using duckdb)")
     parser.add_argument("--verbose", action="store_true", help="Set logging level to DEBUG")
     parser.add_argument("--failed-output", help="Directory to store failed files")
@@ -54,25 +55,21 @@ if __name__ == "__main__":
 
     logger.info("Starting pipeline run...")
 
+    if args.historic:
+        try:
+            if args.local:
+                load_info_imgw_historic = get_local_pipeline(dataset_name="imgw_historic").run(imgw_historic())
+            else:
+                load_info_imgw_historic = get_datalake_pipeline().run(imgw_historic())
+            logger.info("IMGW historic run finished. Load info:\n%s", load_info_imgw_historic)
+        except Exception:
+            logger.exception("Historic pipeline run failed.")
+
     try:
         if args.local:
-            load_info_imgw_historic = get_local_pipeline().run(imgw_historic())
+            load_info_imgw_real_time = get_local_pipeline(dataset_name="imgw_real_time").run(imgw_real_time())
         else:
-            load_info_imgw_historic = get_datalake_pipeline().run(imgw_historic())
-        logger.info("IMGW historic run finished. Load info:\n%s", load_info_imgw_historic)
+            load_info_imgw_real_time = get_datalake_pipeline().run(imgw_real_time())
+        logger.info("IMGW real-time run finished. Load info:\n%s", load_info_imgw_real_time)
     except Exception:
         logger.exception("Pipeline run failed.")
-
-    # if os.listdir("./.failed_files"):
-    #     try:
-    #         if args.local:
-    #             load_info_imgw_historic_failed = get_local_pipeline(dataset_name="imgw_historic_failed").run(
-    #                 imgw_historic_failed()
-    #             )
-    #         else:
-    #             load_info_imgw_historic_failed = get_datalake_pipeline(dataset_name="raw_data_failed").run(
-    #                 imgw_historic_failed()
-    #             )
-    #         logger.info("IMGW historic run finished. Load info:\n%s", load_info_imgw_historic_failed)
-    #     except Exception:
-    #         logger.exception("Pipeline run failed.")

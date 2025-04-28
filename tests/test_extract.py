@@ -63,20 +63,31 @@ class TestHelpers(unittest.TestCase):
     # dont know how to mock dlt.sources.helpers.requests
     # @patch("requests.get")
     # def test_fetch_data_valid_url(self, mock_get):
-    #     mock_response = MagicMock()
+    #     mock_response = Mock()
     #     mock_response.status_code = 200
     #     mock_response.content = b"test_content"
     #     mock_get.return_value = mock_response
-    #     imgw_zip = fetch_data("https://example.com/subdir/test.zip")
+    #     imgw_zip = fetch_zip_data("https://example.com/subdir/test.zip")
     #     self.assertEqual(imgw_zip.filename, "test.zip")
     #     self.assertEqual(imgw_zip.content, b"test_content")
-
+    #
     # @patch("requests.get")
     # def test_fetch_data_invalid_url(self, mock_get):
     #     mock_get.side_effect = requests.RequestException("Mocked request exception")
     #     imgw_zip = fetch_zip_data("https://example.com/invalid_url.zip")
     #     self.assertEqual(imgw_zip.filename, "")
     #     self.assertEqual(imgw_zip.content, b"")
+    #
+    # @patch("requests.get")
+    # def test_get_json_data_404(self, mock_get):
+    #     mock_response = Mock()
+    #     mock_response.status_code = 404
+    #     mock_response.json.return_value = {"status": False, "message": "No products were found"}
+    #     mock_get.return_value = mock_response
+    #     mock_get.return_value.raise_for_status.side_effect = requests.HTTPError(response=mock_response)
+    #
+    #     result = list(get_json_data("test_path"))
+    #     self.assertEqual(result, [{}])
 
 
 if __name__ == "__main__":
