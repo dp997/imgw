@@ -1,14 +1,9 @@
-from collections.abc import Generator
 from typing import Optional
 
-from dagster import AssetExecutionContext, AssetKey, AssetSpec
-from dagster_dlt import DagsterDltResource, dlt_assets
-from dagster_dlt.dlt_event_iterator import DltEventType
+from dagster import AssetKey, AssetSpec
 from dagster_dlt.translator import DagsterDltTranslator, DltResourceTranslatorData
 from dlt.common.destination import Destination
 from dlt.extract import DltResource
-
-from imgw import get_datalake_pipeline, get_local_pipeline, imgw_historic
 
 
 class CustomDltTranslator(DagsterDltTranslator):
@@ -44,25 +39,3 @@ class CustomDltTranslator(DagsterDltTranslator):
         return default_spec.replace_attributes(
             key=self._custom_asset_key_fn(resource=data.resource, destination=data.destination)
         )
-
-
-@dlt_assets(
-    dlt_source=imgw_historic(),
-    dlt_pipeline=get_local_pipeline(),
-    name="imgw_historic_local",
-    group_name="imgw_local",
-    dagster_dlt_translator=CustomDltTranslator(),
-)
-def imgw_historic_local(context: AssetExecutionContext, dlt: DagsterDltResource) -> Generator[DltEventType]:
-    yield from dlt.run(context=context)
-
-
-@dlt_assets(
-    dlt_source=imgw_historic(),
-    dlt_pipeline=get_datalake_pipeline(),
-    name="imgw_historic_datalake",
-    group_name="imgw",
-    dagster_dlt_translator=CustomDltTranslator(),
-)
-def imgw_historic_datalake(context: AssetExecutionContext, dlt: DagsterDltResource) -> Generator[DltEventType]:
-    yield from dlt.run(context=context)
