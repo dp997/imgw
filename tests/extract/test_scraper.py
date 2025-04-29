@@ -3,7 +3,7 @@ from unittest.mock import MagicMock, patch
 
 from bs4 import BeautifulSoup
 
-from imgw.helpers.scraper import (
+from imgw.extract.helpers.scraper import (
     _extract_links,
     _fetch_and_parse,
     _is_visited,
@@ -19,7 +19,7 @@ class TestScraper(unittest.TestCase):
         self.assertFalse(_is_visited("https://example.com", visited_dirs))
         self.assertTrue(_is_visited("https://example.com", visited_dirs))
 
-    @patch("imgw.helpers.scraper.requests.get")
+    @patch("imgw.extract.helpers.scraper.requests.get")
     def test_fetch_and_parse(self, mock_get):
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -54,12 +54,12 @@ class TestScraper(unittest.TestCase):
         link.text.strip.return_value = "Directory"
         visited_dirs = set()
         found_zip_links = set()
-        with patch("imgw.helpers.scraper.scrape_directory_recursive") as mock_scrape:
+        with patch("imgw.extract.helpers.scraper.scrape_directory_recursive") as mock_scrape:
             _process_link(link, "https://example.com", found_zip_links, visited_dirs)
             mock_scrape.assert_called_once()
 
-    @patch("imgw.helpers.scraper._fetch_and_parse")
-    @patch("imgw.helpers.scraper._extract_links")
+    @patch("imgw.extract.helpers.scraper._fetch_and_parse")
+    @patch("imgw.extract.helpers.scraper._extract_links")
     def test_scrape_directory_recursive(self, mock_extract_links, mock_fetch_and_parse):
         mock_fetch_and_parse.return_value = BeautifulSoup("<html></html>", "html.parser")
         mock_extract_links.return_value = []
@@ -67,7 +67,7 @@ class TestScraper(unittest.TestCase):
         mock_fetch_and_parse.assert_called_once()
 
     def test_find_zip_links(self):
-        with patch("imgw.helpers.scraper.scrape_directory_recursive") as mock_scrape:
+        with patch("imgw.extract.helpers.scraper.scrape_directory_recursive") as mock_scrape:
             list(find_zip_links("https://example.com"))
             mock_scrape.assert_called_once()
 

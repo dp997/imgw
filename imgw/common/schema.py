@@ -573,7 +573,7 @@ S_T_COLUMNS_DLT: TTableSchemaColumns = {
     "snow_water_storage_mm_status": {"data_type": "text"},
 }
 
-COLUMNS_DICT = {
+ARROW_COLUMNS_SCHEMA = {
     "k_d_t": K_D_T_COLUMNS,
     "k_d": K_D_COLUMNS,
     "o_d": O_D_COLUMNS,
@@ -583,7 +583,7 @@ COLUMNS_DICT = {
     "s_t": S_T_COLUMNS,
 }
 
-COLUMNS_DLT_SCHEMA = {
+DLT_COLUMNS_SCHEMA = {
     "k_d_t": K_D_T_COLUMNS_DLT,
     "k_d": K_D_COLUMNS_DLT,
     "o_d": O_D_COLUMNS_DLT,

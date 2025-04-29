@@ -14,8 +14,7 @@ from dlt.sources.helpers import requests
 from pyarrow import csv
 from pydantic import BaseModel, field_validator
 
-from imgw.schema import COLUMNS_DICT
-from imgw.utils import get_logger
+from imgw.common import ARROW_COLUMNS_SCHEMA, get_logger
 
 logger = get_logger(__name__)
 
@@ -49,7 +48,8 @@ class ImgwZip(FileResource):
         return v
 
 
-def save_failed_file(file: Union[ImgwCsv, ImgwZip]) -> str | None:
+### 0. common
+def _save_failed_file(file: Union[ImgwCsv, ImgwZip]) -> str | None:
     """
     Saves a file to the rejected folder.
 
@@ -75,57 +75,30 @@ def save_failed_file(file: Union[ImgwCsv, ImgwZip]) -> str | None:
     return None
 
 
-def read_table(file: ImgwCsv, schemas: dict = COLUMNS_DICT) -> tuple[Optional[pa.Table], str]:
+### 1. fetch zips and unzip
+def fetch_zip_data(url: str) -> ImgwZip:
     """
-    Reads a CSV file into a PyArrow Table based on the file's table type.
+    Fetches zip data from a given URL.
 
     Args:
-    file (ImgwCsv): The CSV file to be read.
-    schemas (dict, optional): A dictionary mapping table types to their respective column schemas. Defaults to COLUMNS_DICT.
+        url (str): The URL to fetch zip data from.
 
     Returns:
-    tuple[Optional[pa.Table], str]: A tuple containing the read PyArrow Table and its corresponding table type.
-    If the file does not match any known table type or an error occurs during parsing, returns (None, "").
+        ImgwZip: An ImgwZip object containing the filename and content of the fetched zip data.
+                 If an error occurs during fetching, returns an ImgwZip object with empty filename and content.
 
     Raises:
-    Logs exceptions and warnings using the logger.
+        None
     """
     try:
-        table_type_match = re.match(r"^\D+", file.filename)
-        if table_type_match:
-            table_type = table_type_match.group().rstrip("_")
-        else:
-            logger.warning("'%s' does not match any table type", file.filename)
-            save_failed_file(file)
-            return None, ""
+        filename = urlparse(url).path.split("/")[-1]
+        response = requests.get(url)
+        response.raise_for_status()
     except Exception:
-        logger.exception("Failed while matching table type")
-        save_failed_file(file)
-        return None, ""
-
-    if table_type not in schemas:
-        logger.warning("Unknown table type: %s", table_type)
-        return None, ""
-
-    logger.debug("Reading file: %s", file.filename)
-
-    table_columns = list(schemas[table_type].keys())
-    buffer_reader = BytesIO(file.content)
-
-    try:
-        table = csv.read_csv(
-            buffer_reader,
-            csv.ReadOptions(column_names=table_columns, encoding="windows-1250"),
-            csv.ParseOptions(),
-            csv.ConvertOptions(column_types=schemas[table_type]),
-        )
-        logger.debug(table)
-    except Exception:
-        logger.exception("Error while parsing CSV file: %s", file.filename)
-        save_failed_file(file)
-        return None, ""
+        logger.exception("Error fetching data for %s", url)
+        return ImgwZip(filename="", content=b"")
     else:
-        return table, table_type
+        return ImgwZip(filename=filename, content=response.content)
 
 
 def unzip(zip_file: ImgwZip) -> list[ImgwCsv]:
@@ -161,6 +134,30 @@ def unzip(zip_file: ImgwZip) -> list[ImgwCsv]:
         return files
 
 
+def unzip_alt(zip_file: ImgwZip) -> list[ImgwCsv]:
+    """
+    Unzips the provided ImgwZip into temp directory, reads the CSV files, and returns them as a list of ImgwCsv objects.
+
+    Args:
+    zip_file (ImgwZip): The zip file to be unzipped.
+
+    Returns:
+    list[ImgwCsv]: A list of ImgwCsv objects representing the CSV files.
+    """
+    try:
+        tmp_dir, failed_file_path = _validate_and_unzip(zip_file)
+        if not tmp_dir:
+            return []
+
+        imgw_files = _read_csv_files(tmp_dir)
+        _cleanup(tmp_dir, failed_file_path)
+    except Exception:
+        logger.exception("An error occurred while unzipping file %s", zip_file.filename)
+        return []
+    else:
+        return imgw_files
+
+
 def _unzip_file(unzip_path: str, failed_file_path: str, tmp_dir: str) -> None:
     """
     Unzips the file using the provided unzip_path.
@@ -193,7 +190,7 @@ def _validate_and_unzip(zip_file: ImgwZip) -> tuple[str, str]:
     Raises:
         FileNotFoundError: If the 'unzip' command is not found.
     """
-    failed_file_path = save_failed_file(zip_file)
+    failed_file_path = _save_failed_file(zip_file)
     if not failed_file_path:
         return "", ""
 
@@ -260,56 +257,61 @@ def _cleanup(tmp_dir: str, failed_file_path: str) -> None:
         logger.exception("Failed to remove failed file %s", failed_file_path)
 
 
-### alternative (using `unzip`) extract method
-
-
-def unzip_alt(zip_file: ImgwZip) -> list[ImgwCsv]:
+### 2. parse table
+def parse_table(file: ImgwCsv, schemas: dict = ARROW_COLUMNS_SCHEMA) -> tuple[Optional[pa.Table], str]:
     """
-    Unzips the provided ImgwZip into temp directory, reads the CSV files, and returns them as a list of ImgwCsv objects.
+    Reads a CSV file into a PyArrow Table based on the file's table type.
 
     Args:
-    zip_file (ImgwZip): The zip file to be unzipped.
+    file (ImgwCsv): The CSV file to be read.
+    schemas (dict, optional): A dictionary mapping table types to their respective column schemas. Defaults to COLUMNS_DICT.
 
     Returns:
-    list[ImgwCsv]: A list of ImgwCsv objects representing the CSV files.
-    """
-    try:
-        tmp_dir, failed_file_path = _validate_and_unzip(zip_file)
-        if not tmp_dir:
-            return []
-
-        imgw_files = _read_csv_files(tmp_dir)
-        _cleanup(tmp_dir, failed_file_path)
-    except Exception:
-        logger.exception("An error occurred while unzipping file %s", zip_file.filename)
-        return []
-    else:
-        return imgw_files
-
-
-def fetch_zip_data(url: str) -> ImgwZip:
-    """
-    Fetches zip data from a given URL.
-
-    Args:
-        url (str): The URL to fetch zip data from.
-
-    Returns:
-        ImgwZip: An ImgwZip object containing the filename and content of the fetched zip data.
-                 If an error occurs during fetching, returns an ImgwZip object with empty filename and content.
+    tuple[Optional[pa.Table], str]: A tuple containing the read PyArrow Table and its corresponding table type.
+    If the file does not match any known table type or an error occurs during parsing, returns (None, "").
 
     Raises:
-        None
+    Logs exceptions and warnings using the logger.
     """
     try:
-        filename = urlparse(url).path.split("/")[-1]
-        response = requests.get(url)
-        response.raise_for_status()
+        table_type_match = re.match(r"^\D+", file.filename)
+        if table_type_match:
+            table_type = table_type_match.group().rstrip("_")
+        else:
+            logger.warning("'%s' does not match any table type", file.filename)
+            _save_failed_file(file)
+            return None, ""
     except Exception:
-        logger.exception("Error fetching data for %s", url)
-        return ImgwZip(filename="", content=b"")
+        logger.exception("Failed while matching table type")
+        _save_failed_file(file)
+        return None, ""
+
+    if table_type not in schemas:
+        logger.warning("Unknown table type: %s", table_type)
+        return None, ""
+
+    logger.debug("Reading file: %s", file.filename)
+
+    table_columns = list(schemas[table_type].keys())
+    buffer_reader = BytesIO(file.content)
+
+    try:
+        table = csv.read_csv(
+            buffer_reader,
+            csv.ReadOptions(column_names=table_columns, encoding="windows-1250"),
+            csv.ParseOptions(),
+            csv.ConvertOptions(column_types=schemas[table_type]),
+        )
+        logger.debug(table)
+    except Exception:
+        logger.exception("Error while parsing CSV file: %s", file.filename)
+        _save_failed_file(file)
+        return None, ""
     else:
-        return ImgwZip(filename=filename, content=response.content)
+        return table, table_type
+
+
+### 4. get real time data
 
 
 def get_json_data(path: str) -> Iterable[TDataItem]:

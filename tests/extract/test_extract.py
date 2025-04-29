@@ -2,7 +2,7 @@ import unittest
 
 import pyarrow as pa
 
-from imgw.helpers.extract import ImgwCsv, ImgwZip, read_table, save_failed_file, unzip
+from imgw.extract.helpers.extract import ImgwCsv, ImgwZip, _save_failed_file, parse_table, unzip
 
 TEST_VALID_SCHEMA = {"test_table": {"column1": pa.int64(), "column2": pa.string()}}
 
@@ -22,28 +22,28 @@ class TestHelpers(unittest.TestCase):
 
     def test_save_failed_file(self):
         imgw_csv = ImgwCsv(filename="test.csv", content=b"test_content")
-        save_failed_file(imgw_csv)
+        _save_failed_file(imgw_csv)
 
     # Verify that the file is created on disk
 
     def test_read_table_valid_csv(self):
         csv_content = b"1,test 1\n2,test 2"
         imgw_csv = ImgwCsv(filename="test_table_92734.csv", content=csv_content)
-        table, table_type = read_table(imgw_csv, schemas=TEST_VALID_SCHEMA)
+        table, table_type = parse_table(imgw_csv, schemas=TEST_VALID_SCHEMA)
         self.assertIsNotNone(table)
         self.assertEqual(table_type, "test_table")  # Assuming "table" is a valid table type
 
     def test_read_table_invalid_csv(self):
         csv_content = b"invalid csv content"
         imgw_csv = ImgwCsv(filename="test_table.csv", content=csv_content)
-        table, table_type = read_table(imgw_csv)
+        table, table_type = parse_table(imgw_csv)
         self.assertIsNone(table)
         self.assertEqual(table_type, "")
 
     def test_read_table_invalid_table_type(self):
         csv_content = b"column1,column2\n1,2\n3,4"
         imgw_csv = ImgwCsv(filename="invalid_table.csv", content=csv_content)
-        table, table_type = read_table(imgw_csv)
+        table, table_type = parse_table(imgw_csv)
         self.assertIsNone(table)
         self.assertEqual(table_type, "")
 

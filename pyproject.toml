@@ -121,8 +121,8 @@ package = false
 directory_type = "project"
 
 [tool.dg.project]
-root_module = "imgw"
-code_location_target_module = "imgw.definitions"
+root_module = "imgw.dags.dagster"
+code_location_target_module = "imgw.dags.dagster.definitions"
 
 [tool.dagster.project.python_environment]
 persistent_uv = true

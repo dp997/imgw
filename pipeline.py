@@ -3,8 +3,8 @@ import logging
 import os
 from typing import Optional
 
-from imgw import get_datalake_pipeline, get_local_pipeline, imgw_historic, imgw_real_time
-from imgw.utils import setup_logging
+from imgw.common import setup_logging
+from imgw.extract import get_dlt_datalake_pipeline, get_dlt_local_pipeline, imgw_historic, imgw_real_time
 
 
 def check_directory(path: str, create: Optional[bool] = False) -> None:
@@ -12,13 +12,13 @@ def check_directory(path: str, create: Optional[bool] = False) -> None:
     Check if the directory exists, create it if it doesn't and create is True.
 
     Args:
-    path (str): The directory path to check.
-    create (Optional[bool], optional): Whether to create the directory if it doesn't exist. Defaults to False.
+        path (str): The directory path to check.
+        create (Optional[bool], optional): Whether to create the directory if it doesn't exist. Defaults to False.
 
     Raises:
-    NotADirectoryError: If the path exists but is not a directory.
-    FileNotFoundError: If create is False and the directory doesn't exist.
-    OSError: If there's an OS-related error while creating the directory.
+        NotADirectoryError: If the path exists but is not a directory.
+        FileNotFoundError: If create is False and the directory doesn't exist.
+        OSError: If there's an OS-related error while creating the directory.
     """
     if os.path.exists(path):
         if not os.path.isdir(path):
@@ -58,18 +58,18 @@ if __name__ == "__main__":
     if args.historic:
         try:
             if args.local:
-                load_info_imgw_historic = get_local_pipeline(dataset_name="imgw_historic").run(imgw_historic())
+                load_info_imgw_historic = get_dlt_local_pipeline(dataset_name="imgw_historic").run(imgw_historic())
             else:
-                load_info_imgw_historic = get_datalake_pipeline().run(imgw_historic())
+                load_info_imgw_historic = get_dlt_datalake_pipeline().run(imgw_historic())
             logger.info("IMGW historic run finished. Load info:\n%s", load_info_imgw_historic)
         except Exception:
             logger.exception("Historic pipeline run failed.")
 
     try:
         if args.local:
-            load_info_imgw_real_time = get_local_pipeline(dataset_name="imgw_real_time").run(imgw_real_time())
+            load_info_imgw_real_time = get_dlt_local_pipeline(dataset_name="imgw_real_time").run(imgw_real_time())
         else:
-            load_info_imgw_real_time = get_datalake_pipeline().run(imgw_real_time())
+            load_info_imgw_real_time = get_dlt_datalake_pipeline().run(imgw_real_time())
         logger.info("IMGW real-time run finished. Load info:\n%s", load_info_imgw_real_time)
     except Exception:
         logger.exception("Pipeline run failed.")

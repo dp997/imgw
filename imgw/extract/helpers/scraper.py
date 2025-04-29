@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from bs4.element import AttributeValueList, Tag
 from dlt.sources.helpers import requests
 
-from imgw.utils import get_logger
+from imgw.common import get_logger
 
 logger = get_logger(__name__)
 
