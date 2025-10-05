@@ -42,6 +42,7 @@ if __name__ == "__main__":
     parser.add_argument("--verbose", action="store_true", help="Set logging level to DEBUG")
     parser.add_argument("--failed-output", help="Directory to store failed files")
     parser.add_argument("--local-output", help="Path to duckdb database where data will be loaded")
+    parser.add_argument("--refresh", action="store_true", help="Refresh data (delete and reload)")
     args = parser.parse_args()
 
     setup_logging()
@@ -55,12 +56,18 @@ if __name__ == "__main__":
 
     logger.info("Starting pipeline run...")
 
+    run_kwargs = {}
+    if args.refresh:
+        run_kwargs["refresh"] = "drop_data"
+
     if args.historic:
         try:
             if args.local:
-                load_info_imgw_historic = get_dlt_local_pipeline(dataset_name="imgw_historic").run(imgw_historic())
+                load_info_imgw_historic = get_dlt_local_pipeline(dataset_name="imgw_historic").run(
+                    imgw_historic(), **run_kwargs
+                )
             else:
-                load_info_imgw_historic = get_dlt_datalake_pipeline().run(imgw_historic())
+                load_info_imgw_historic = get_dlt_datalake_pipeline().run(imgw_historic(), **run_kwargs)
             logger.info("IMGW historic run finished. Load info:\n%s", load_info_imgw_historic)
         except Exception:
             logger.exception("Historic pipeline run failed.")
