@@ -5,6 +5,7 @@ request_timeout = 20
 
 [data_writer]
 file_max_bytes=200000000
+buffer_max_items=100000
 
 [normalize]
 workers=8

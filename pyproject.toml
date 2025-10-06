@@ -48,7 +48,6 @@ dev = [
     "streamlit>=1.44.1",
     "pyarrow-stubs>=19.1",
     "psutil>=7.0.0",
-    "licensecheck>=2025.1.0",
 ]
 
 [tool.mypy]
