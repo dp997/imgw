@@ -1,39 +1,8 @@
 import argparse
 import logging
-import os
-from typing import Optional
 
 from imgw.common import setup_logging
 from imgw.extract import get_dlt_datalake_pipeline, get_dlt_local_pipeline, imgw_historic, imgw_real_time
-
-
-def check_directory(path: str, create: Optional[bool] = False) -> None:
-    """
-    Check if the directory exists, create it if it doesn't and create is True.
-
-    Args:
-        path (str): The directory path to check.
-        create (Optional[bool], optional): Whether to create the directory if it doesn't exist. Defaults to False.
-
-    Raises:
-        NotADirectoryError: If the path exists but is not a directory.
-        FileNotFoundError: If create is False and the directory doesn't exist.
-        OSError: If there's an OS-related error while creating the directory.
-    """
-    if os.path.exists(path):
-        if not os.path.isdir(path):
-            raise NotADirectoryError(path)
-    else:
-        if create:
-            try:
-                os.makedirs(path, exist_ok=True)
-                logging.info("Created directory %s", path)
-            except OSError:
-                logging.exception("Failed to create directory %s", path)
-                raise
-        else:
-            raise FileNotFoundError(path)
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="")
@@ -51,9 +20,6 @@ if __name__ == "__main__":
     logger.setLevel("DEBUG") if args.verbose else logger.setLevel("INFO")
     logger.info("Configuring DLT pipeline...")
 
-    failed_output_directory = args.failed_output if args.failed_output else "./.failed_files/"
-    check_directory(failed_output_directory, True)
-
     logger.info("Starting pipeline run...")
 
     run_kwargs = {}
@@ -68,7 +34,7 @@ if __name__ == "__main__":
                 )
             else:
                 load_info_imgw_historic = get_dlt_datalake_pipeline().run(imgw_historic(), **run_kwargs)
-            logger.info("IMGW historic run finished. Load info:\n%s", load_info_imgw_historic)
+            logger.info("IMGW historic run finished. Load info:\n%s", load_info_imgw_historic.metrics)
         except Exception:
             logger.exception("Historic pipeline run failed.")
 

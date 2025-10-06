@@ -2,10 +2,10 @@ import os
 import re
 import shutil
 import subprocess
+import tempfile
 import zipfile
 from collections.abc import Iterable
 from io import BytesIO
-from typing import Optional, Union
 from urllib.parse import urlparse
 
 import pyarrow as pa
@@ -14,7 +14,10 @@ from dlt.sources.helpers import requests
 from pyarrow import csv
 from pydantic import BaseModel, field_validator
 
-from imgw.common import ARROW_COLUMNS_SCHEMA, get_logger
+from imgw.common import ARROW_COLUMNS_SCHEMA, check_directory, get_logger
+
+TEMP_DIRECTORY = tempfile.TemporaryDirectory()
+check_directory(TEMP_DIRECTORY.name, True)
 
 logger = get_logger(__name__)
 
@@ -49,29 +52,49 @@ class ImgwZip(FileResource):
 
 
 ### 0. common
-def _save_failed_file(file: Union[ImgwCsv, ImgwZip]) -> str | None:
+def _save_failed_file(file: ImgwCsv | ImgwZip, failed_dir: str | None) -> str | None:
     """
     Saves a file to the rejected folder.
 
-    Attempts to save the given file to the './.failed_files/' directory.
+    Attempts to save the given file to the 'temp_directory' directory.
     Logs the outcome of the operation.
 
     Args:
         file (Union[ImgwCsv, ImgwZip]): The file to be saved.
+        temp_directory (str): Temp file directory
 
     Returns:
         None
     """
 
-    logger.info("Saving file: %s in rejected folder", file.filename)
+    if not failed_dir:
+        failed_dir = "./failed_files"
+    logger.info("Saving file: %s in %s directory", file.filename, failed_dir)
+
     try:
-        with open(f"./.failed_files/{file.filename}", "wb") as f:
+        with open(f"{failed_dir}/{file.filename}", "wb") as f:
             f.write(file.content)
     except Exception:
         logger.exception("Failed to save file '%s'", file.filename)
     else:
         if file.filename.endswith(".zip"):
-            return f"./.failed_files/{file.filename}"
+            return f"{failed_dir}/{file.filename}"
+    return None
+
+
+def _save_file(file: ImgwCsv | ImgwZip, save_directory: str | None) -> str | None:
+    if not save_directory:
+        save_directory = "./failed_files"
+    logger.info("Saving file: %s in %s directory", file.filename, save_directory)
+
+    try:
+        with open(f"{save_directory}/{file.filename}", "wb") as f:
+            f.write(file.content)
+    except Exception:
+        logger.exception("Failed to save file '%s'", file.filename)
+    else:
+        if file.filename.endswith(".zip"):
+            return f"{save_directory}/{file.filename}"
     return None
 
 
@@ -85,7 +108,7 @@ def fetch_zip_data(url: str) -> ImgwZip:
 
     Returns:
         ImgwZip: An ImgwZip object containing the filename and content of the fetched zip data.
-                 If an error occurs during fetching, returns an ImgwZip object with empty filename and content.
+                 If an error occurs during fetching, returns None.
 
     Raises:
         None
@@ -96,7 +119,7 @@ def fetch_zip_data(url: str) -> ImgwZip:
         response.raise_for_status()
     except Exception:
         logger.exception("Error fetching data for %s", url)
-        return ImgwZip(filename="", content=b"")
+        raise
     else:
         return ImgwZip(filename=filename, content=response.content)
 
@@ -129,7 +152,7 @@ def unzip(zip_file: ImgwZip) -> list[ImgwCsv]:
         return unzip_alt(zip_file)
     except Exception:
         logger.exception("Failed to read zip file.")
-        return []
+        raise
     else:
         return files
 
@@ -145,22 +168,51 @@ def unzip_alt(zip_file: ImgwZip) -> list[ImgwCsv]:
     list[ImgwCsv]: A list of ImgwCsv objects representing the CSV files.
     """
     try:
-        tmp_dir, failed_file_path = _validate_and_unzip(zip_file)
-        if not tmp_dir:
-            return []
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            failed_dir = tmp_dir
+            failed_unzipped_directory = _validate_and_unzip(zip_file, failed_dir)
+            if not failed_unzipped_directory:
+                return []
 
-        imgw_files = _read_csv_files(tmp_dir)
-        _cleanup(tmp_dir, failed_file_path)
+            imgw_files = _read_csv_files(tmp_dir)
+            _cleanup(tmp_dir, failed_unzipped_directory)
     except Exception:
-        logger.exception("An error occurred while unzipping file %s", zip_file.filename)
-        return []
+        logger.exception("An error occurred while unzipping file using alt method: %s", zip_file.filename)
+        raise
     else:
         return imgw_files
 
 
+def _validate_and_unzip(zip_file: ImgwZip, tmp_dir: str) -> str:
+    """
+    Saves the zip file and unzips it into a temporary directory.
+
+    Args:
+        zip_file: The zip file to be saved and unzipped.
+
+    Returns:
+        A tuple containing the path to the temporary directory where the zip file
+        is unzipped and the path to the saved zip file.
+
+    Raises:
+        FileNotFoundError: If the 'unzip' command is not found.
+    """
+    failed_file_path = _save_file(zip_file, tmp_dir)
+    if not failed_file_path:
+        return ""
+
+    unzip_path = shutil.which("unzip")
+    if unzip_path is None:
+        raise FileNotFoundError("unzip")
+
+    logger.info("Unzipping file %s into %s...", failed_file_path, tmp_dir)
+    _unzip_file(unzip_path, failed_file_path, tmp_dir)
+    return failed_file_path
+
+
 def _unzip_file(unzip_path: str, failed_file_path: str, tmp_dir: str) -> None:
     """
-    Unzips the file using the provided unzip_path.
+    Unzips the file using 'unzip'.
 
     Args:
         unzip_path (str): The path to the unzip executable.
@@ -175,33 +227,6 @@ def _unzip_file(unzip_path: str, failed_file_path: str, tmp_dir: str) -> None:
     except subprocess.CalledProcessError:
         logger.exception("Failed to unzip file %s", failed_file_path)
         raise
-
-
-def _validate_and_unzip(zip_file: ImgwZip) -> tuple[str, str]:
-    """
-    Saves the zip file and unzips it into a temporary directory.
-
-    Args:
-        zip_file: The zip file to be saved and unzipped.
-
-    Returns:
-        A tuple containing the path to the temporary directory where the zip file is unzipped and the path to the saved zip file.
-
-    Raises:
-        FileNotFoundError: If the 'unzip' command is not found.
-    """
-    failed_file_path = _save_failed_file(zip_file)
-    if not failed_file_path:
-        return "", ""
-
-    tmp_dir = f".tmp-{zip_file.filename}"
-    unzip_path = shutil.which("unzip")
-    if unzip_path is None:
-        raise FileNotFoundError("unzip")
-
-    logger.info("Unzipping file %s into %s...", failed_file_path, tmp_dir)
-    _unzip_file(unzip_path, failed_file_path, tmp_dir)
-    return tmp_dir, failed_file_path
 
 
 def _read_csv_files(tmp_dir: str) -> list[ImgwCsv]:
@@ -244,12 +269,12 @@ def _cleanup(tmp_dir: str, failed_file_path: str) -> None:
     Notes:
         Logs exceptions if removal of temporary directory or failed file fails.
     """
-    try:
-        for file in os.listdir(tmp_dir):
-            os.remove(os.path.join(tmp_dir, file))
-        os.rmdir(tmp_dir)
-    except Exception:
-        logger.exception("Failed to remove temporary directory %s", tmp_dir)
+    # try:
+    #     for file in os.listdir(tmp_dir):
+    #         os.remove(os.path.join(tmp_dir, file))
+    #     os.rmdir(tmp_dir)
+    # except Exception:
+    #     logger.exception("Failed to remove temporary directory %s", tmp_dir)
 
     try:
         os.remove(failed_file_path)
@@ -258,7 +283,7 @@ def _cleanup(tmp_dir: str, failed_file_path: str) -> None:
 
 
 ### 2. parse table
-def parse_table(file: ImgwCsv, schemas: dict = ARROW_COLUMNS_SCHEMA) -> tuple[Optional[pa.Table], str]:
+def parse_table(file: ImgwCsv, schemas: dict = ARROW_COLUMNS_SCHEMA) -> tuple[pa.Table, str]:
     """
     Reads a CSV file into a PyArrow Table based on the file's table type.
 
@@ -267,7 +292,7 @@ def parse_table(file: ImgwCsv, schemas: dict = ARROW_COLUMNS_SCHEMA) -> tuple[Op
     schemas (dict, optional): A dictionary mapping table types to their respective column schemas. Defaults to COLUMNS_DICT.
 
     Returns:
-    tuple[Optional[pa.Table], str]: A tuple containing the read PyArrow Table and its corresponding table type.
+    tuple[pa.table, str]: A tuple containing the read PyArrow Table and its corresponding table type.
     If the file does not match any known table type or an error occurs during parsing, returns (None, "").
 
     Raises:
@@ -280,15 +305,15 @@ def parse_table(file: ImgwCsv, schemas: dict = ARROW_COLUMNS_SCHEMA) -> tuple[Op
         else:
             logger.warning("'%s' does not match any table type", file.filename)
             _save_failed_file(file)
-            return None, ""
+            raise
     except Exception:
         logger.exception("Failed while matching table type")
         _save_failed_file(file)
-        return None, ""
+        raise
 
     if table_type not in schemas:
         logger.warning("Unknown table type: %s", table_type)
-        return None, ""
+        raise
 
     logger.debug("Reading file: %s", file.filename)
 
@@ -306,7 +331,7 @@ def parse_table(file: ImgwCsv, schemas: dict = ARROW_COLUMNS_SCHEMA) -> tuple[Op
     except Exception:
         logger.exception("Error while parsing CSV file: %s", file.filename)
         _save_failed_file(file)
-        return None, ""
+        raise
     else:
         return table, table_type
 
