@@ -36,6 +36,9 @@ dagster = [
     "dagster-dlt>=0.26.10",
     "dagster-postgres>=0.26.10",
 ]
+airflow = [
+    "apache-airflow==3.1.0",
+]
 
 [dependency-groups]
 dev = [

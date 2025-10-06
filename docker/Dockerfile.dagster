@@ -12,8 +12,14 @@ COPY imgw /opt/dagster/app/imgw
 COPY pyproject.toml /opt/dagster/app/pyproject.toml
 COPY uv.lock /opt/dagster/app/uv.lock
 
-RUN uv sync
+RUN uv sync --frozen --all-extras
+
+ENV VIRTUAL_ENV=/opt/dagster/app/.venv \
+  PATH="/opt/dagster/app/.venv/bin:$PATH" \
+  DAGSTER_CURRENT_IMAGE='imgw:0.0.1-dagster'
 
 EXPOSE 4000
 
-CMD ["uv", "run", "dagster", "code-server", "start", "-h", "0.0.0.0", "-p", "4000", "-f", "./imgw/definitions.py"]
+ENTRYPOINT ["uv", "run", "dagster", "code-server", "start", "-h", "0.0.0.0", "-p", "4000", "-m", "imgw.dags.dagster.definitions"]
+
+CMD []
