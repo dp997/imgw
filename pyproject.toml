@@ -117,6 +117,9 @@ ignore = [
 [tool.ruff.format]
 preview = true
 
+[tool.pyright]
+reportAny = false
+
 [tool.uv]
 package = false
 
