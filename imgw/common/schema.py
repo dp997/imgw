@@ -2,7 +2,7 @@ import pyarrow as pa
 from dlt.common.schema import TTableSchemaColumns
 
 ### klimat
-K_D_T_COLUMNS = {
+K_D_T_COLUMNS: dict[str, pa.DataType] = {
     "station_code": pa.int32(),
     "station_name": pa.string(),
     "year": pa.int16(),
@@ -34,7 +34,7 @@ K_D_T_COLUMNS_DLT: TTableSchemaColumns = {
     "cloud_coverage_daily_status": {"data_type": "text"},
 }
 
-K_D_COLUMNS = {
+K_D_COLUMNS: dict[str, pa.DataType] = {
     "station_code": pa.int32(),
     "station_name": pa.string(),
     "year": pa.int16(),
@@ -77,7 +77,7 @@ K_D_COLUMNS_DLT: TTableSchemaColumns = {
 }
 
 ### opady
-O_D_COLUMNS = {
+O_D_COLUMNS: dict[str, pa.DataType] = {
     "station_code": pa.int32(),
     "station_name": pa.string(),
     "year": pa.int16(),
@@ -115,7 +115,7 @@ O_D_COLUMNS_DLT: TTableSchemaColumns = {
     "snow_cover_type_code_status": {"data_type": "text"},
 }
 
-S_D_COLUMNS = {
+S_D_COLUMNS: dict[str, pa.DataType] = {
     "station_code": pa.int32(),
     "station_name": pa.string(),
     "year": pa.int16(),
@@ -251,7 +251,7 @@ S_D_COLUMNS_DLT: TTableSchemaColumns = {
     "actinometry_status": {"data_type": "text"},
 }
 
-S_D_T_COLUMNS = {
+S_D_T_COLUMNS: dict[str, pa.DataType] = {
     "station_code": pa.int32(),
     "station_name": pa.string(),
     "year": pa.int16(),
@@ -303,7 +303,7 @@ S_D_T_COLUMNS_DLT: TTableSchemaColumns = {
     "precipitation_sum_night_status": {"data_type": "text"},
 }
 
-K_T_COLUMNS = {
+K_T_COLUMNS: dict[str, pa.DataType] = {
     "station_code": pa.int32(),
     "station_name": pa.string(),
     "year": pa.int16(),
@@ -353,7 +353,7 @@ K_T_COLUMNS_DLT: TTableSchemaColumns = {
     "visibility_code_status": {"data_type": "text"},
 }
 
-S_T_COLUMNS = {
+S_T_COLUMNS: dict[str, pa.DataType] = {
     "station_code": pa.int32(),
     "station_name": pa.string(),
     "year": pa.int16(),
