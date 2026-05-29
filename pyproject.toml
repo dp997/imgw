@@ -18,7 +18,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "bs4>=0.0.2",
+    "beautifulsoup4>=4.14.3",
     "dlt[duckdb,filesystem]>=1.15.0",
     "duckdb>=1.3.0",
     "pyarrow>=19.0.1",
@@ -40,6 +40,8 @@ airflow = [
     "apache-airflow==3.1.0",
 ]
 
+prefect = ["prefect"]
+
 [dependency-groups]
 dev = [
     "pytest>=7.2.0",
@@ -51,6 +53,7 @@ dev = [
     "streamlit>=1.44.1",
     "pyarrow-stubs>=19.1",
     "psutil>=7.0.0",
+    "ty>=0.0.40",
 ]
 
 [tool.mypy]
@@ -62,6 +65,25 @@ check_untyped_defs = true
 warn_return_any = true
 warn_unused_ignores = true
 show_error_codes = true
+
+[tool.ty.src]
+include = ["imgw", "dags"]
+
+[tool.ty.analysis]
+respect-type-ignore-comments = true
+
+[tool.ty.rules]
+unresolved-import = "error"
+possibly-missing-import = "error"
+invalid-parameter-default = "error"
+unused-ignore-comment = "error"
+unused-type-ignore-comment = "error"
+invalid-ignore-comment = "error"
+ignore-comment-unknown-rule = "error"
+
+[tool.ty.terminal]
+output-format = "full"
+
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
