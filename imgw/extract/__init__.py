@@ -121,7 +121,7 @@ def get_dlt_datalake_pipeline(dataset_name: str = "raw_data") -> dlt.Pipeline:
     The dataset name is set to "raw_data" and progress is logged.
 
     Returns:
-        dlt.Pipeline: A dlt Pipeline instance.
+        dlt.Pipeline: A dlt Pipeline instance configured for s3-compatible destination.
     """
 
     return dlt.pipeline(
@@ -130,6 +130,27 @@ def get_dlt_datalake_pipeline(dataset_name: str = "raw_data") -> dlt.Pipeline:
         dataset_name=dataset_name,
         progress="log",
     )
+
+def get_dlt_snowflake_pipeline(
+        dataset_name: str = "imgw",
+        ) -> dlt.Pipeline:
+    """
+    Returns a dlt Pipeline instance configured to load data into Snowflake.
+
+    Args:
+        dataset_name: The Snowflake dataset name to load data into.
+
+    Returns:
+        A dlt Pipeline configured with the Snowflake destination.
+    """
+
+    return dlt.pipeline(
+        pipeline_name="imgw_pipeline_snowflake",
+        destination=dlt.destinations.snowflake(destination_name="snowflake"),
+        dataset_name=dataset_name,
+        progress="log"
+    )
+
 
 
 @dlt.source(name="imgw_real_time", max_table_nesting=0)
