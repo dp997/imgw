@@ -65,11 +65,39 @@ This is a **lot** of data. Pipeline **will** consume a lot of memory to insert i
 Duckdb database will be saved in `outputs/imgw.db` by default.
 
 ## 3. Dagster
-In case you want to try it out with dagster, you can run the dev webserver with uv:
+Install the Dagster adapter, then run the dev webserver:
 
-`uv run --with=dagster-webserver dagster dev`
+```
+uv sync --extra dagster
+uv run --with=dagster-webserver dagster dev
+```
 
-## 4. Docker
+To validate the Dagster definitions locally without materializing assets or
+executing dlt loads (structure-only check):
+
+```
+PYTHONPATH=. uv run python -m pytest tests/orchestrators/test_dagster_definitions.py -v
+```
+
+## 4. Airflow
+Airflow is an optional orchestrator extra. Install it alongside the core dependencies with:
+
+```
+uv sync --extra airflow
+```
+
+To validate the DAGs locally with a parse-only check via `DagBag` (no task
+execution, no IMGW requests, no dlt loads):
+
+```
+PYTHONPATH=. uv run python -m pytest tests/orchestrators/test_airflow_dags.py -v
+```
+
+> Note: the Dagster and Airflow commands above only validate the definitions
+> structurally. Configuring dlt credentials/secrets (see section 1) is still
+> required to actually run any data loads.
+
+## 5. Docker
 TODO
 
 

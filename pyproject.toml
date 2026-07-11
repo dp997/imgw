@@ -38,6 +38,9 @@ dagster = [
 ]
 airflow = [
     "apache-airflow==3.1.0",
+    # Airflow 3.1.0 is incompatible with structlog>=25.5.0 (drops structlog.dev.Styles).
+    # Pinned to the version enforced by the official Airflow 3.1.0 constraints.
+    "structlog==25.4.0",
 ]
 
 prefect = ["prefect"]
@@ -89,7 +92,7 @@ output-format = "full"
 testpaths = ["tests"]
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py310"
 line-length = 120
 fix = true
 
@@ -149,8 +152,8 @@ package = false
 directory_type = "project"
 
 [tool.dg.project]
-root_module = "imgw.dags.dagster"
-code_location_target_module = "imgw.dags.dagster.definitions"
+root_module = "dags.dagster"
+code_location_target_module = "dags.dagster.definitions"
 
 [tool.dagster.project.python_environment]
 persistent_uv = true

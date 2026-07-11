@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
       fail-fast: false
     defaults:
       run:
@@ -48,3 +48,43 @@ jobs:
 
       - name: Check typing
         run: uv run mypy
+
+  airflow-dags:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up the environment (with airflow extra)
+        uses: ./.github/actions/setup-python-env
+        with:
+          python-version: "3.12"
+          extras: "--extra airflow"
+
+      - name: Parse DAGs
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: uv run python -m pytest tests/orchestrators/test_airflow_dags.py -v
+
+  dagster-definitions:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up the environment (with dagster extra)
+        uses: ./.github/actions/setup-python-env
+        with:
+          python-version: "3.12"
+          extras: "--extra dagster"
+
+      - name: Validate Dagster definitions
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: uv run python -m pytest tests/orchestrators/test_dagster_definitions.py -v
