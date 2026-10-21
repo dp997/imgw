@@ -65,6 +65,10 @@ That will execute the script with `datalake` destination (object storage).
 By default both the historic and the real-time pipelines run; use `--historic`
 or `--real-time` to run only one of them.
 
+Unparseable CSVs and corrupt archives are kept in `.failed_files/` for
+inspection (override with `--failed-output DIR`). A corrupt archive does not
+abort the run.
+
 If you want to run the pipeline locally with duckdb output, use the `--local` flag:
 
 ### WARNING BEFORE YOU RUN LOCAL PIPELINE

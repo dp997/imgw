@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os
 
 from imgw.common import setup_logging
 from imgw.extract import (
@@ -31,6 +32,9 @@ def main() -> int:
     parser.add_argument("--local-output", help="Path to duckdb database where data will be loaded")
     parser.add_argument("--refresh", action="store_true", help="Refresh data (delete and reload)")
     args = parser.parse_args()
+
+    if args.failed_output:
+        os.environ["IMGW_FAILED_OUTPUT"] = args.failed_output
 
     setup_logging()
 

@@ -152,6 +152,7 @@ rsa_key.p8
 # elt results
 output/
 .failed_files/
+failed_files/
 *.csv
 
 # dagster tmp directories

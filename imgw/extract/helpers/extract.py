@@ -52,6 +52,11 @@ class ImgwZip(FileResource):
 
 
 ### 0. common
+def _failed_files_directory() -> str:
+    """Directory where unparseable inputs are kept for inspection."""
+    return os.environ.get("IMGW_FAILED_OUTPUT") or "./.failed_files"
+
+
 def _save_file(file: ImgwCsv | ImgwZip, save_directory: str | None = None) -> str | None:
     """
     Saves a file to the provided directory.
@@ -67,10 +72,11 @@ def _save_file(file: ImgwCsv | ImgwZip, save_directory: str | None = None) -> st
         Saved file path.
     """
     if not save_directory:
-        save_directory = "./failed_files"
+        save_directory = _failed_files_directory()
     logger.info("Saving file: %s in %s directory", file.filename, save_directory)
 
     try:
+        check_directory(save_directory, True)
         with open(f"{save_directory}/{file.filename}", "wb") as f:
             _ = f.write(file.content)
     except Exception:
@@ -183,6 +189,8 @@ def unzip_alt(zip_file: ImgwZip) -> list[ImgwCsv]:
             # the whole directory should be deleted after that
     except Exception:
         logger.exception("An error occurred while unzipping file using alt method: %s", zip_file.filename)
+        logger.warning("Keeping corrupt archive %s in failed files", zip_file.filename)
+        _ = _save_file(zip_file)
         return []
     else:
         return imgw_files

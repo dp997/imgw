@@ -3,6 +3,7 @@ import os
 import tempfile
 import unittest
 import zipfile
+from unittest.mock import patch
 
 import pyarrow as pa
 
@@ -14,6 +15,13 @@ TEST_VALID_ZIP = b'PK\x03\x04\n\x00\x00\x00\x00\x00\x9a\xa0\x96Za\xe4\x84"\x0c\x
 
 
 class TestHelpers(unittest.TestCase):
+    def setUp(self):
+        self._failed_files = tempfile.TemporaryDirectory()
+        self.addCleanup(self._failed_files.cleanup)
+        patcher = patch.dict(os.environ, {"IMGW_FAILED_OUTPUT": self._failed_files.name})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_imgw_csv_model(self):
         imgw_csv = ImgwCsv(filename="test.csv", content=b"test_content")
         self.assertEqual(imgw_csv.filename, "test.csv")
@@ -29,6 +37,13 @@ class TestHelpers(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp_dir:
             saved_path = _save_file(imgw_csv, tmp_dir)
             self.assertTrue(os.path.exists(saved_path))
+
+    def test_save_file_creates_missing_directory(self):
+        imgw_csv = ImgwCsv(filename="test.csv", content=b"test_content")
+        target = os.path.join(self._failed_files.name, "missing")
+        saved_path = _save_file(imgw_csv, target)
+        self.assertTrue(os.path.isdir(target))
+        self.assertTrue(os.path.exists(saved_path))
 
     # Verify that the file is created on disk
 
@@ -80,6 +95,7 @@ class TestHelpers(unittest.TestCase):
         imgw_zip = ImgwZip(filename="test.zip", content=zip_content)
         csv_files = unzip(imgw_zip)
         self.assertEqual(csv_files, [])
+        self.assertTrue(os.path.exists(os.path.join(self._failed_files.name, "test.zip")))
 
     # dont know how to mock dlt.sources.helpers.requests
     # @patch("requests.get")
