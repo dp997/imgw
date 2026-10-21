@@ -145,6 +145,10 @@ cython_debug/
 # dlt
 .dlt/secrets.toml
 
+# credentials
+rsa_key.p8
+*.p8
+
 # elt results
 output/
 .failed_files/
