@@ -62,6 +62,8 @@ Use the provided pipeline.py script:
 `uv run pipeline.py`
 
 That will execute the script with `datalake` destination (object storage).
+By default both the historic and the real-time pipelines run; use `--historic`
+or `--real-time` to run only one of them.
 
 If you want to run the pipeline locally with duckdb output, use the `--local` flag:
 
