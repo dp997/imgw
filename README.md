@@ -76,13 +76,36 @@ This is a **lot** of data. Pipeline **will** consume a lot of memory to insert i
 
 `uv run pipeline.py --local`
 
-Duckdb database will be saved in `outputs/imgw.db` by default.
+Duckdb database will be saved in `output/imgw.db` by default.
 
 You can also use snowflake destination:
 
 `uv run pipeline.py --snowflake`
 
-## 3. Dagster
+## 3. Source schema audit
+`scripts/audit_source_schema.py` is a read-only check against the live IMGW
+archives. It downloads a bounded sample from the configured root URLs, parses
+one CSV per recognized table type with the same code the pipeline uses, and
+reports:
+
+- parsed columns vs the declared ARROW schema
+- ARROW vs dlt key differences
+- value-quality warnings (invalid dates, out-of-range hours, suspicious
+  sentinel values, plausibility violations)
+
+Run it manually or on a schedule (it needs network access, so it is not part of
+CI):
+
+```
+uv run python scripts/audit_source_schema.py
+uv run python scripts/audit_source_schema.py --json
+```
+
+It exits non-zero when a recognized table type cannot be sampled, parsing fails,
+or the ARROW and dlt schemas disagree. Use `--max-archives-per-root` to bound the
+number of downloads.
+
+## 4. Dagster
 Install the Dagster adapter, then run the dev webserver:
 
 ```
@@ -97,7 +120,7 @@ executing dlt loads (structure-only check):
 PYTHONPATH=. uv run python -m pytest tests/orchestrators/test_dagster_definitions.py -v
 ```
 
-## 4. Airflow
+## 5. Airflow
 Airflow is an optional orchestrator extra. Install it alongside the core dependencies with:
 
 ```
@@ -115,7 +138,7 @@ PYTHONPATH=. uv run python -m pytest tests/orchestrators/test_airflow_dags.py -v
 > structurally. Configuring dlt credentials/secrets (see section 1) is still
 > required to actually run any data loads.
 
-## 5. Docker
+## 6. Docker
 TODO
 
 
