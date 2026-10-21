@@ -131,9 +131,10 @@ def get_dlt_datalake_pipeline(dataset_name: str = "raw_data") -> dlt.Pipeline:
         progress="log",
     )
 
+
 def get_dlt_snowflake_pipeline(
-        dataset_name: str = "imgw",
-        ) -> dlt.Pipeline:
+    dataset_name: str = "imgw",
+) -> dlt.Pipeline:
     """
     Returns a dlt Pipeline instance configured to load data into Snowflake.
 
@@ -148,9 +149,8 @@ def get_dlt_snowflake_pipeline(
         pipeline_name="imgw_pipeline_snowflake",
         destination=dlt.destinations.snowflake(destination_name="snowflake"),
         dataset_name=dataset_name,
-        progress="log"
+        progress="log",
     )
-
 
 
 @dlt.source(name="imgw_real_time", max_table_nesting=0)

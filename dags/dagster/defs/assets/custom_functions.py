@@ -1,5 +1,3 @@
-from typing import Optional
-
 from dagster import AssetKey, AssetSpec
 from dagster_dlt.translator import DagsterDltTranslator, DltResourceTranslatorData
 from dlt.common.destination import Destination
@@ -7,7 +5,7 @@ from dlt.extract import DltResource
 
 
 class CustomDltTranslator(DagsterDltTranslator):
-    def _custom_asset_key_fn(self, resource: DltResource, destination: Optional[Destination]) -> AssetKey:
+    def _custom_asset_key_fn(self, resource: DltResource, destination: Destination | None) -> AssetKey:
         """Defines asset key for a given dlt resource key and dataset name.
 
         Args:

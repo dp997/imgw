@@ -1,5 +1,4 @@
 from collections.abc import Iterable
-from typing import Union
 from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
@@ -32,7 +31,7 @@ def _is_visited(current_url: str, visited_dirs: set) -> bool:
     return False
 
 
-def _fetch_and_parse(current_url: str) -> Union[BeautifulSoup, None]:
+def _fetch_and_parse(current_url: str) -> BeautifulSoup | None:
     """
     Fetches the content of a given URL and parses it using BeautifulSoup.
 

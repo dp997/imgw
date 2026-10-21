@@ -1,9 +1,8 @@
 import logging
 import os
-from typing import Optional
 
 
-def check_directory(path: str, create: Optional[bool] = False) -> None:
+def check_directory(path: str, create: bool | None = False) -> None:
     """
     Check if the directory exists, create it if it doesn't and create is True.
 

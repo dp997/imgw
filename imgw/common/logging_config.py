@@ -1,7 +1,6 @@
 import logging
 import logging.config
 import sys
-from typing import Optional
 
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
 
@@ -20,7 +19,7 @@ COLORS = {
 
 def setup_logging() -> None:
     class ColoredFormatter(logging.Formatter):
-        def __init__(self, fmt: str, datefmt: Optional[str] = None, use_color: bool = True) -> None:
+        def __init__(self, fmt: str, datefmt: str | None = None, use_color: bool = True) -> None:
             logging.Formatter.__init__(self, fmt, datefmt)
             self.use_color = use_color
 
