@@ -146,12 +146,12 @@ def unzip(zip_file: ImgwZip) -> list[ImgwCsv]:
         files = []
         with zipfile.ZipFile(zip_data, "r") as zip_ref:
             for file_info in zip_ref.infolist():
-                if not file_info.is_dir():
-                    with zip_ref.open(file_info.filename) as file:
-                        imgw_file = ImgwCsv(filename=file.name, content=file.read())
-                        files.append(imgw_file)
-                else:
-                    return []
+                if file_info.is_dir():
+                    logger.debug("Skipping directory entry: %s", file_info.filename)
+                    continue
+                with zip_ref.open(file_info.filename) as file:
+                    imgw_file = ImgwCsv(filename=os.path.basename(file.name), content=file.read())
+                    files.append(imgw_file)
     except zipfile.BadZipFile:
         logger.exception("The provided bytes are not a valid zip file.")
         logger.info("Turning to alternative unzip method.")
@@ -183,7 +183,7 @@ def unzip_alt(zip_file: ImgwZip) -> list[ImgwCsv]:
             # the whole directory should be deleted after that
     except Exception:
         logger.exception("An error occurred while unzipping file using alt method: %s", zip_file.filename)
-        raise
+        return []
     else:
         return imgw_files
 
@@ -237,22 +237,20 @@ def parse_table(
     Raises:
     Logs exceptions and warnings using the logger.
     """
-    try:
-        table_type_match = re.match(r"^\D+", file.filename)
-        if table_type_match:
-            table_type = table_type_match.group().rstrip("_")
-        else:
-            logger.warning("'%s' does not match any table type", file.filename)
-            _ = _save_file(file)
-            raise
-    except Exception:
-        logger.exception("Failed while matching table type")
+    filename = os.path.basename(file.filename)
+    table_type_match = re.match(r"^\D+", filename)
+    if table_type_match is None:
+        logger.warning("'%s' does not match any table type", file.filename)
         _ = _save_file(file)
-        raise
+        msg = f"Filename {file.filename!r} does not match any table type"
+        raise ValueError(msg)
+
+    table_type = table_type_match.group().rstrip("_")
 
     if table_type not in schemas:
         logger.warning("Unknown table type: %s", table_type)
-        raise
+        msg = f"Unknown table type: {table_type}"
+        raise ValueError(msg)
 
     logger.debug("Reading file: %s", file.filename)
 
