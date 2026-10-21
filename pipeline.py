@@ -14,7 +14,8 @@ from imgw.extract import (
 
 def _build_pipeline(args: argparse.Namespace, dataset_name: str):
     if args.local:
-        return get_dlt_local_pipeline(dataset_name=dataset_name)
+        local_kwargs = {"db_file": args.local_output} if args.local_output else {}
+        return get_dlt_local_pipeline(dataset_name=dataset_name, **local_kwargs)
     if args.snowflake:
         return get_dlt_snowflake_pipeline(dataset_name=dataset_name)
     return get_dlt_datalake_pipeline()
@@ -59,7 +60,7 @@ def main() -> int:
         logger.info("Starting real-time pipeline run...")
         try:
             load_info = _build_pipeline(args, dataset_name="imgw_real_time").run(imgw_real_time())
-            logger.info("IMGW real-time run finished. Load info:\n%s", load_info)
+            logger.info("IMGW real-time run finished. Load info:\n%s", load_info.metrics)
         except Exception:
             logger.exception("Real-time pipeline run failed.")
             failed = True
