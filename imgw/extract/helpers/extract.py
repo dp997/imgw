@@ -296,7 +296,7 @@ def get_json_data(path: str) -> Iterable[TDataItem]:
         response = requests.get(url, headers=headers)
         response.raise_for_status()
     except requests.HTTPError as http_err:
-        if http_err.response.status_code == 404:
+        if http_err.response is not None and http_err.response.status_code == 404:
             try:
                 error_body = http_err.response.json()
                 if (
