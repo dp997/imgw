@@ -25,6 +25,13 @@ dependencies = [
     "pydantic>=2.11.3",
 ]
 
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["imgw"]
+
 [project.urls]
 Homepage = "https://dp997.github.io/imgw/"
 Repository = "https://github.com/dp997/imgw"
@@ -54,7 +61,6 @@ dev = [
     "pre-commit>=2.20.0",
     "tox-uv>=1.11.3",
     "deptry>=0.23.0",
-    "mypy>=0.991",
     "ruff>=0.11.5",
     "streamlit>=1.44.1",
     "pyarrow-stubs>=19.1",
@@ -62,18 +68,8 @@ dev = [
     "ty>=0.0.40",
 ]
 
-[tool.mypy]
-files = ["imgw"]
-disallow_untyped_defs = true
-disallow_any_unimported = true
-no_implicit_optional = true
-check_untyped_defs = true
-warn_return_any = true
-warn_unused_ignores = true
-show_error_codes = true
-
 [tool.ty.src]
-include = ["imgw", "dags"]
+include = ["imgw"]
 
 [tool.ty.analysis]
 respect-type-ignore-comments = true
@@ -149,7 +145,7 @@ preview = true
 reportAny = false
 
 [tool.uv]
-package = false
+package = true
 
 [tool.dg]
 directory_type = "project"
