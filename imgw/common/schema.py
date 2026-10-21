@@ -1,5 +1,32 @@
 import pyarrow as pa
+from dlt.common.data_types import TDataType
 from dlt.common.schema import TTableSchemaColumns
+
+# The Arrow schema for each table is the single source of truth. The dlt hints
+# are projected from it below, so the two cannot drift apart again.
+_DLT_DATA_TYPE_BY_ARROW: dict[pa.DataType, TDataType] = {
+    pa.int8(): "bigint",
+    pa.int16(): "bigint",
+    pa.int32(): "bigint",
+    pa.int64(): "bigint",
+    pa.float32(): "double",
+    pa.float64(): "double",
+    pa.string(): "text",
+}
+
+
+def _to_dlt_columns(columns: dict[str, pa.DataType]) -> TTableSchemaColumns:
+    """Project an Arrow column schema onto dlt column hints."""
+    hints: TTableSchemaColumns = {}
+    for name, arrow_type in columns.items():
+        try:
+            data_type = _DLT_DATA_TYPE_BY_ARROW[arrow_type]
+        except KeyError:
+            msg = f"No dlt data_type mapping for Arrow type {arrow_type} (column {name!r})"
+            raise ValueError(msg) from None
+        hints[name] = {"data_type": data_type}
+    return hints
+
 
 ### klimat
 K_D_T_COLUMNS: dict[str, pa.DataType] = {
@@ -18,21 +45,7 @@ K_D_T_COLUMNS: dict[str, pa.DataType] = {
     "cloud_coverage_status": pa.string(),
 }
 
-K_D_T_COLUMNS_DLT: TTableSchemaColumns = {
-    "station_code": {"data_type": "bigint"},
-    "station_name": {"data_type": "text"},
-    "year": {"data_type": "bigint"},
-    "month": {"data_type": "bigint"},
-    "day": {"data_type": "bigint"},
-    "temp_daily_average": {"data_type": "double"},
-    "temp_daily_average_status": {"data_type": "text"},
-    "humidity_daily_average": {"data_type": "double"},
-    "humidity_daily_status": {"data_type": "text"},
-    "wind_speed_daily_average": {"data_type": "double"},
-    "wind_speed_daily_status": {"data_type": "text"},
-    "cloud_coverage_daily_average": {"data_type": "double"},
-    "cloud_coverage_daily_status": {"data_type": "text"},
-}
+K_D_T_COLUMNS_DLT: TTableSchemaColumns = _to_dlt_columns(K_D_T_COLUMNS)
 
 K_D_COLUMNS: dict[str, pa.DataType] = {
     "station_code": pa.int32(),
@@ -55,26 +68,7 @@ K_D_COLUMNS: dict[str, pa.DataType] = {
     "snow_coverage_status": pa.string(),
 }
 
-K_D_COLUMNS_DLT: TTableSchemaColumns = {
-    "station_code": {"data_type": "bigint"},
-    "station_name": {"data_type": "text"},
-    "year": {"data_type": "bigint"},
-    "month": {"data_type": "bigint"},
-    "day": {"data_type": "bigint"},
-    "temp_daily_max": {"data_type": "double"},
-    "temp_max_status": {"data_type": "text"},
-    "temp_daily_min": {"data_type": "double"},
-    "temp_min_status": {"data_type": "text"},
-    "temp_daily_average": {"data_type": "double"},
-    "temp_average_status": {"data_type": "text"},
-    "ground_temp_min": {"data_type": "double"},
-    "ground_temp_status": {"data_type": "text"},
-    "precipitation_daily_total": {"data_type": "double"},
-    "precipitation_status": {"data_type": "text"},
-    "precipitation_type": {"data_type": "text"},
-    "snow_coverage_height": {"data_type": "double"},
-    "snow_coverage_status": {"data_type": "text"},
-}
+K_D_COLUMNS_DLT: TTableSchemaColumns = _to_dlt_columns(K_D_COLUMNS)
 
 ### opady
 O_D_COLUMNS: dict[str, pa.DataType] = {
@@ -96,24 +90,7 @@ O_D_COLUMNS: dict[str, pa.DataType] = {
     "snow_cover_type_code_status": pa.string(),  # Status pomiaru RPSN
 }
 
-O_D_COLUMNS_DLT: TTableSchemaColumns = {
-    "station_code": {"data_type": "bigint"},
-    "station_name": {"data_type": "text"},
-    "year": {"data_type": "bigint"},
-    "month": {"data_type": "bigint"},
-    "day": {"data_type": "bigint"},
-    "precipitation_daily_total": {"data_type": "double"},
-    "precipitation_daily_total_status": {"data_type": "text"},
-    "precipitation_type": {"data_type": "text"},  # Single character type
-    "snow_cover_height": {"data_type": "double"},  # float safer
-    "snow_cover_height_status": {"data_type": "text"},
-    "fresh_snow_height": {"data_type": "double"},  # float safer
-    "fresh_snow_height_status": {"data_type": "text"},
-    "snow_type_code": {"data_type": "text"},  # Single character code
-    "snow_type_code_status": {"data_type": "text"},
-    "snow_cover_type_code": {"data_type": "text"},  # 5 character code
-    "snow_cover_type_code_status": {"data_type": "text"},
-}
+O_D_COLUMNS_DLT: TTableSchemaColumns = _to_dlt_columns(O_D_COLUMNS)
 
 S_D_COLUMNS: dict[str, pa.DataType] = {
     "station_code": pa.int32(),
@@ -183,73 +160,7 @@ S_D_COLUMNS: dict[str, pa.DataType] = {
     "actinometry_status": pa.string(),
 }
 
-S_D_COLUMNS_DLT: TTableSchemaColumns = {
-    "station_code": {"data_type": "bigint"},
-    "station_name": {"data_type": "text"},
-    "year": {"data_type": "bigint"},
-    "month": {"data_type": "bigint"},
-    "day": {"data_type": "bigint"},
-    "temp_daily_max": {"data_type": "double"},
-    "temp_daily_max_status": {"data_type": "text"},
-    "temp_daily_min": {"data_type": "double"},
-    "temp_daily_min_status": {"data_type": "text"},
-    "temp_daily_average": {"data_type": "double"},
-    "temp_daily_average_status": {"data_type": "text"},
-    "ground_temp_min": {"data_type": "double"},
-    "ground_temp_min_status": {"data_type": "text"},
-    "precipitation_daily_total": {"data_type": "double"},
-    "precipitation_daily_total_status": {"data_type": "text"},  # Adjusted name based on SMDB
-    "precipitation_type": {"data_type": "text"},
-    "snow_coverage_height": {"data_type": "double"},  # Assuming float is safer even if width is 5
-    "snow_coverage_height_status": {"data_type": "text"},  # Adjusted name based on PKSN
-    "snow_water_equivalent": {"data_type": "double"},
-    "snow_water_equivalent_status": {"data_type": "text"},
-    "sunshine_duration": {"data_type": "double"},
-    "sunshine_duration_status": {"data_type": "text"},
-    "duration_rain": {"data_type": "double"},
-    "duration_rain_status": {"data_type": "text"},
-    "duration_snow": {"data_type": "double"},
-    "duration_snow_status": {"data_type": "text"},
-    "duration_sleet": {"data_type": "double"},
-    "duration_sleet_status": {"data_type": "text"},
-    "duration_hail": {"data_type": "double"},
-    "duration_hail_status": {"data_type": "text"},
-    "duration_fog": {"data_type": "double"},
-    "duration_fog_status": {"data_type": "text"},
-    "duration_mist": {"data_type": "double"},
-    "duration_mist_status": {"data_type": "text"},
-    "duration_rime": {"data_type": "double"},
-    "duration_rime_status": {"data_type": "text"},
-    "duration_glaze": {"data_type": "double"},
-    "duration_glaze_status": {"data_type": "text"},
-    "duration_low_drifting_snow": {"data_type": "double"},
-    "duration_low_drifting_snow_status": {"data_type": "text"},
-    "duration_high_drifting_snow": {"data_type": "double"},
-    "duration_high_drifting_snow_status": {"data_type": "text"},
-    "duration_haze": {"data_type": "double"},
-    "duration_haze_status": {"data_type": "text"},
-    "duration_wind_gte_10mps": {"data_type": "double"},
-    "duration_wind_gte_10mps_status": {"data_type": "text"},
-    "duration_wind_gt_15mps": {"data_type": "double"},
-    "duration_wind_gt_15mps_status": {"data_type": "text"},
-    "duration_thunderstorm": {"data_type": "double"},
-    "duration_thunderstorm_status": {"data_type": "text"},
-    "duration_dew": {"data_type": "double"},
-    "duration_dew_status": {"data_type": "text"},
-    "duration_frost": {"data_type": "double"},
-    "duration_frost_status": {"data_type": "text"},
-    "occurrence_snow_cover": {"data_type": "bigint"},
-    "occurrence_snow_cover_status": {"data_type": "text"},
-    "occurrence_lightning": {"data_type": "bigint"},
-    "occurrence_lightning_status": {"data_type": "text"},
-    "ground_state": {"data_type": "text"},
-    "isotherm_lower": {"data_type": "double"},
-    "isotherm_lower_status": {"data_type": "text"},
-    "isotherm_upper": {"data_type": "double"},
-    "isotherm_upper_status": {"data_type": "text"},
-    "actinometry": {"data_type": "double"},
-    "actinometry_status": {"data_type": "text"},
-}
+S_D_COLUMNS_DLT: TTableSchemaColumns = _to_dlt_columns(S_D_COLUMNS)
 
 S_D_T_COLUMNS: dict[str, pa.DataType] = {
     "station_code": pa.int32(),
@@ -277,31 +188,7 @@ S_D_T_COLUMNS: dict[str, pa.DataType] = {
     "precipitation_sum_night_status": pa.string(),  # Status pomiaru WONO
 }
 
-S_D_T_COLUMNS_DLT: TTableSchemaColumns = {
-    "station_code": {"data_type": "bigint"},
-    "station_name": {"data_type": "text"},
-    "year": {"data_type": "bigint"},
-    "month": {"data_type": "bigint"},
-    "day": {"data_type": "bigint"},
-    "average_daily_cloud_cover": {"data_type": "double"},
-    "cloud_cover_status": {"data_type": "text"},
-    "average_daily_wind_speed": {"data_type": "double"},
-    "wind_speed_status": {"data_type": "text"},
-    "temp_daily_average": {"data_type": "double"},
-    "temp_daily_average_status": {"data_type": "text"},
-    "average_daily_vapor_pressure": {"data_type": "double"},
-    "vapor_pressure_status": {"data_type": "text"},
-    "average_daily_relative_humidity": {"data_type": "double"},
-    "relative_humidity_status": {"data_type": "text"},
-    "average_daily_station_pressure": {"data_type": "double"},
-    "station_pressure_status": {"data_type": "text"},
-    "average_daily_sea_level_pressure": {"data_type": "double"},
-    "sea_level_pressure_status": {"data_type": "text"},
-    "precipitation_sum_day": {"data_type": "double"},
-    "precipitation_sum_day_status": {"data_type": "text"},
-    "precipitation_sum_night": {"data_type": "double"},
-    "precipitation_sum_night_status": {"data_type": "text"},
-}
+S_D_T_COLUMNS_DLT: TTableSchemaColumns = _to_dlt_columns(S_D_T_COLUMNS)
 
 K_T_COLUMNS: dict[str, pa.DataType] = {
     "station_code": pa.int32(),
@@ -328,30 +215,7 @@ K_T_COLUMNS: dict[str, pa.DataType] = {
     "visibility_code_status": pa.string(),  # Status pomiaru WID
 }
 
-K_T_COLUMNS_DLT: TTableSchemaColumns = {
-    "station_code": {"data_type": "bigint"},
-    "station_name": {"data_type": "text"},
-    "year": {"data_type": "bigint"},
-    "month": {"data_type": "bigint"},
-    "day": {"data_type": "bigint"},
-    "hour": {"data_type": "bigint"},
-    "air_temperature": {"data_type": "double"},
-    "air_temperature_status": {"data_type": "text"},
-    "wet_bulb_temperature": {"data_type": "double"},
-    "wet_bulb_temperature_status": {"data_type": "text"},
-    "ice_indicator": {"data_type": "text"},
-    "ventilation_indicator": {"data_type": "text"},
-    "relative_humidity": {"data_type": "double"},
-    "relative_humidity_status": {"data_type": "text"},
-    "wind_direction_code": {"data_type": "text"},  # Using text for code
-    "wind_direction_code_status": {"data_type": "text"},
-    "wind_speed": {"data_type": "double"},
-    "wind_speed_status": {"data_type": "text"},
-    "cloud_cover_general": {"data_type": "double"},  # Using double for oktants
-    "cloud_cover_general_status": {"data_type": "text"},
-    "visibility_code": {"data_type": "text"},  # Using text for code
-    "visibility_code_status": {"data_type": "text"},
-}
+K_T_COLUMNS_DLT: TTableSchemaColumns = _to_dlt_columns(K_T_COLUMNS)
 
 S_T_COLUMNS: dict[str, pa.DataType] = {
     "station_code": pa.int32(),
@@ -463,115 +327,7 @@ S_T_COLUMNS: dict[str, pa.DataType] = {
     "snow_water_storage_mm_status": pa.string(),  # Status pomiaru CIPR
 }
 
-S_T_COLUMNS_DLT: TTableSchemaColumns = {
-    "station_code": {"data_type": "bigint"},
-    "station_name": {"data_type": "text"},
-    "year": {"data_type": "bigint"},
-    "month": {"data_type": "bigint"},
-    "day": {"data_type": "bigint"},
-    "hour": {"data_type": "bigint"},
-    "cloud_base_cl_cm_coded": {"data_type": "text"},
-    "cloud_base_cl_cm_coded_status": {"data_type": "text"},
-    "cloud_base_lower_m": {"data_type": "double"},
-    "cloud_base_lower_m_status": {"data_type": "text"},
-    "cloud_base_upper_m": {"data_type": "double"},
-    "cloud_base_upper_m_status": {"data_type": "text"},
-    "cloud_base_text": {"data_type": "text"},
-    "measurement_instrument_1_lower": {"data_type": "text"},
-    "measurement_instrument_2_upper": {"data_type": "text"},
-    "visibility_code": {"data_type": "text"},
-    "visibility_code_status": {"data_type": "text"},
-    "visibility_operator_m": {"data_type": "double"},
-    "visibility_operator_m_status": {"data_type": "text"},
-    "visibility_auto_m": {"data_type": "double"},
-    "visibility_auto_m_status": {"data_type": "text"},
-    "cloud_cover_general_oktants": {"data_type": "text"},  # Oktants as integer
-    "cloud_cover_general_oktants_status": {"data_type": "text"},
-    "wind_direction_deg": {"data_type": "double"},
-    "wind_direction_deg_status": {"data_type": "text"},
-    "wind_speed_ms": {"data_type": "double"},
-    "wind_speed_ms_status": {"data_type": "text"},
-    "wind_gust_ms": {"data_type": "double"},
-    "wind_gust_ms_status": {"data_type": "text"},
-    "air_temperature_c": {"data_type": "double"},
-    "air_temperature_c_status": {"data_type": "text"},
-    "wet_bulb_temperature_c": {"data_type": "double"},
-    "wet_bulb_temperature_c_status": {"data_type": "text"},
-    "ventilation_indicator": {"data_type": "text"},
-    "ice_indicator": {"data_type": "text"},
-    "vapor_pressure_hpa": {"data_type": "double"},
-    "vapor_pressure_hpa_status": {"data_type": "text"},
-    "relative_humidity_percent": {"data_type": "double"},
-    "relative_humidity_percent_status": {"data_type": "text"},
-    "dew_point_temperature_c": {"data_type": "double"},
-    "dew_point_temperature_c_status": {"data_type": "text"},
-    "station_pressure_hpa": {"data_type": "double"},
-    "station_pressure_hpa_status": {"data_type": "text"},
-    "sea_level_pressure_hpa": {"data_type": "double"},
-    "sea_level_pressure_hpa_status": {"data_type": "text"},
-    "pressure_tendency_characteristic_code": {"data_type": "text"},
-    "pressure_tendency_value": {"data_type": "double"},
-    "pressure_tendency_status": {"data_type": "text"},
-    "precipitation_6hr_mm": {"data_type": "double"},
-    "precipitation_6hr_mm_status": {"data_type": "text"},
-    "precipitation_type_6hr_code": {"data_type": "text"},
-    "precipitation_type_6hr_code_status": {"data_type": "text"},
-    "weather_present_code": {"data_type": "text"},
-    "weather_past_code": {"data_type": "text"},
-    "cloud_cover_low_oktants": {"data_type": "text"},  # Oktants as integer
-    "cloud_cover_low_oktants_status": {"data_type": "text"},
-    "cloud_type_cl_code": {"data_type": "text"},
-    "cloud_type_cl_code_status": {"data_type": "text"},
-    "cloud_type_cl_text": {"data_type": "text"},
-    "cloud_type_cm_code": {"data_type": "text"},
-    "cloud_type_cm_code_status": {"data_type": "text"},
-    "cloud_type_cm_text": {"data_type": "text"},
-    "cloud_type_ch_code": {"data_type": "text"},
-    "cloud_type_ch_code_status": {"data_type": "text"},
-    "cloud_type_ch_text": {"data_type": "text"},
-    "ground_state_code": {"data_type": "text"},
-    "ground_state_code_status": {"data_type": "text"},
-    "humidity_deficit_hpa": {"data_type": "double"},
-    "humidity_deficit_hpa_status": {"data_type": "text"},
-    "sunshine_duration": {"data_type": "double"},
-    "sunshine_duration_status": {"data_type": "text"},
-    "dew_occurrence_flag": {"data_type": "bigint"},  # 0/1 flag
-    "dew_occurrence_flag_status": {"data_type": "text"},
-    "max_gust_ww_period_ms": {"data_type": "double"},
-    "max_gust_ww_period_ms_status": {"data_type": "text"},
-    "max_gust_hour": {"data_type": "bigint"},
-    "max_gust_minute": {"data_type": "bigint"},
-    "ground_temp_5cm_c": {"data_type": "double"},
-    "ground_temp_5cm_c_status": {"data_type": "text"},
-    "ground_temp_10cm_c": {"data_type": "double"},
-    "ground_temp_10cm_c_status": {"data_type": "text"},
-    "ground_temp_20cm_c": {"data_type": "double"},
-    "ground_temp_20cm_c_status": {"data_type": "text"},
-    "ground_temp_50cm_c": {"data_type": "double"},
-    "ground_temp_50cm_c_status": {"data_type": "text"},
-    "ground_temp_100cm_c": {"data_type": "double"},
-    "ground_temp_100cm_c_status": {"data_type": "text"},
-    "temp_min_12hr_c": {"data_type": "double"},
-    "temp_min_12hr_c_status": {"data_type": "text"},
-    "temp_max_12hr_c": {"data_type": "double"},
-    "temp_max_12hr_c_status": {"data_type": "text"},
-    "ground_temp_min_12hr_c": {"data_type": "double"},
-    "ground_temp_min_12hr_c_status": {"data_type": "text"},
-    "snow_water_equivalent_mm_cm": {"data_type": "double"},
-    "snow_water_equivalent_mm_cm_status": {"data_type": "text"},
-    "snow_cover_height_cm": {"data_type": "double"},
-    "snow_cover_height_cm_status": {"data_type": "text"},
-    "fresh_snow_height_cm": {"data_type": "double"},
-    "fresh_snow_height_cm_status": {"data_type": "text"},
-    "snow_height_plot_cm": {"data_type": "double"},
-    "snow_height_plot_cm_status": {"data_type": "text"},
-    "snow_type_code": {"data_type": "text"},
-    "snow_cover_formation_code": {"data_type": "text"},
-    "snow_sample_height_cm": {"data_type": "double"},
-    "snow_sample_height_cm_status": {"data_type": "text"},
-    "snow_water_storage_mm": {"data_type": "double"},
-    "snow_water_storage_mm_status": {"data_type": "text"},
-}
+S_T_COLUMNS_DLT: TTableSchemaColumns = _to_dlt_columns(S_T_COLUMNS)
 
 ARROW_COLUMNS_SCHEMA = {
     "k_d_t": K_D_T_COLUMNS,
