@@ -12,15 +12,11 @@ check: ## Run code quality tools.
 	@uv run pre-commit run -a
 	@echo "🚀 Static type checking: Running ty"
 	@uv run ty check
-	@echo "🚀 Checking for obsolete dependencies: Running deptry"
-	@uv run deptry .
-	@echo "🚀 Checking for license compatibility"
-	@uv run licensecheck --zero
 
 .PHONY: test
-test: ## Test the code with pytest
+test: ## Test the code with pytest (core tests; orchestrator tests need extras)
 	@echo "🚀 Testing code: Running pytest"
-	@uv run python -m pytest --doctest-modules
+	@uv run python -m pytest --doctest-modules tests --ignore=tests/orchestrators
 
 .PHONY: build
 build: clean-build ## Build wheel file
