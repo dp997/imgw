@@ -15,6 +15,9 @@ RUN uv sync --frozen --no-install-project
 # Copy main package to /app directory
 COPY imgw /app/imgw
 
+# Copy project metadata required to build the package
+COPY README.md /app/README.md
+
 # Copy main script into /app directory
 COPY pipeline.py /app/pipeline.py
 
